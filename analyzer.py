@@ -1,5 +1,5 @@
 """
-Analisador de Arquitetura com GPT-4 Vision
+Analisador de Arquitetura com GPT-5-mini Vision
 Aplica a metodologia STRIDE em diagramas de arquitetura
 """
 
@@ -8,17 +8,35 @@ import base64
 from openai import OpenAI
 from dotenv import load_dotenv
 import json
+from openai import APITimeoutError, APIError
+import logging
+from datetime import datetime
 
 # Carregar variáveis de ambiente
 load_dotenv()
 
-# Inicializar cliente OpenAI
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('analyzer.log')
+    ]
+)
+logger = logging.getLogger(__name__)
+
+# Inicializar cliente OpenAI com timeout aumentado
+client = OpenAI(
+    api_key=os.getenv("OPENAI_API_KEY"),
+    timeout=300.0,  # 5 minutos de timeout
+    max_retries=2
+)
 
 
 def analyze_architecture(image_path: str) -> dict:
     """
-    Analisa um diagrama de arquitetura usando GPT-4 Vision e aplica STRIDE
+    Analisa um diagrama de arquitetura usando GPT-5-mini Vision e aplica STRIDE
     
     Args:
         image_path: Caminho para o arquivo de imagem da arquitetura
@@ -27,13 +45,23 @@ def analyze_architecture(image_path: str) -> dict:
         dict: Resultado da análise com ameaças identificadas e contramedidas
     """
     
+    start_time = datetime.now()
+    logger.info(f"🚀 Iniciando análise do arquivo: {image_path}")
+    
     # Ler e codificar a imagem
     try:
+        logger.info("📂 Lendo arquivo de imagem...")
         with open(image_path, "rb") as f:
-            image_base64 = base64.b64encode(f.read()).decode()
+            image_data = f.read()
+            image_size_mb = len(image_data) / (1024 * 1024)
+            logger.info(f"✅ Imagem carregada: {image_size_mb:.2f} MB")
+            image_base64 = base64.b64encode(image_data).decode()
+            logger.info(f"✅ Imagem codificada em base64: {len(image_base64)} caracteres")
     except FileNotFoundError:
+        logger.error(f"❌ Arquivo não encontrado: {image_path}")
         return {"error": f"Arquivo não encontrado: {image_path}"}
     except Exception as e:
+        logger.error(f"❌ Erro ao ler arquivo: {str(e)}")
         return {"error": f"Erro ao ler arquivo: {str(e)}"}
     
     # Prompt para análise STRIDE
@@ -64,14 +92,15 @@ def analyze_architecture(image_path: str) -> dict:
             {
                 "nome": "nome do componente",
                 "tipo": "tipo do componente (ex: database, api, user, server)",
+                "descricao": "breve descrição do componente e sua função na arquitetura",
                 "ameacas": [
                     {
-                        "categoria_stride": "S/T/R/I/D/E",
-                        "descricao": "descrição da ameaça",
-                        "criticidade": "Alta/Média/Baixa",
-                        "contramedidas": ["contramedida 1", "contramedida 2"]
+                        "categoria": "S/T/R/I/D/E",
+                        "descricao": "descrição detalhada da ameaça",
+                        "severidade": "Alta/Média/Baixa"
                     }
-                ]
+                ],
+                "contramedidas": ["contramedida 1", "contramedida 2", "contramedida 3"]
             }
         ],
         "fluxos_dados": [
@@ -96,9 +125,17 @@ def analyze_architecture(image_path: str) -> dict:
     """
     
     try:
-        # Fazer chamada à API do OpenAI com GPT-4 Vision
+        logger.info("🤖 Enviando requisição para GPT-5-mini Vision...")
+        logger.info(f"   Modelo: gpt-5-mini")
+        logger.info(f"   Max tokens: 8192")
+        logger.info(f"   Temperature: 1")
+        logger.info(f"   Timeout: 300s")
+        
+        api_start = datetime.now()
+        
+        # Fazer chamada à API do OpenAI com GPT-5-mini Vision
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-5-mini",
             messages=[
                 {
                     "role": "user",
@@ -114,44 +151,73 @@ def analyze_architecture(image_path: str) -> dict:
                     ]
                 }
             ],
-            max_tokens=4096,
-            temperature=0.7
+            max_completion_tokens=8192,
+            temperature=1
         )
+        
+        api_duration = (datetime.now() - api_start).total_seconds()
+        logger.info(f"✅ Resposta recebida da API em {api_duration:.2f}s")
         
         # Extrair resposta
         analysis_text = response.choices[0].message.content
+        logger.info(f"📝 Resposta recebida: {len(analysis_text)} caracteres")
+        logger.info(f"   Primeiros 100 caracteres: {analysis_text[:100]}...")
         
         # Tentar parsear como JSON
+        logger.info("🔍 Tentando parsear resposta como JSON...")
         try:
             # Procurar por JSON na resposta
             if "```json" in analysis_text:
+                logger.info("   Detectado bloco de código JSON com markdown")
                 json_start = analysis_text.find("```json") + 7
                 json_end = analysis_text.find("```", json_start)
                 json_str = analysis_text[json_start:json_end].strip()
                 analysis_json = json.loads(json_str)
+                logger.info("✅ JSON parseado com sucesso (de bloco markdown)")
             elif analysis_text.strip().startswith("{"):
+                logger.info("   Detectado JSON direto")
                 analysis_json = json.loads(analysis_text)
+                logger.info("✅ JSON parseado com sucesso (direto)")
             else:
+                logger.warning("⚠️  Resposta não é JSON, retornando como texto")
                 # Se não for JSON, retornar como texto
                 analysis_json = {
                     "analysis_text": analysis_text,
                     "note": "Análise retornada em formato texto"
                 }
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            logger.error(f"❌ Erro ao parsear JSON: {str(e)}")
             # Se falhar o parse, retornar como texto
             analysis_json = {
                 "analysis_text": analysis_text,
                 "note": "Não foi possível parsear como JSON"
             }
         
+        total_duration = (datetime.now() - start_time).total_seconds()
+        logger.info(f"✅ Análise completa em {total_duration:.2f}s")
+        logger.info(f"   Componentes encontrados: {len(analysis_json.get('componentes', []))}")
+        
         return {
             "success": True,
             "analysis": analysis_json,
-            "model": "gpt-4o",
+            "model": "gpt-5-mini",
             "image_path": image_path
         }
-        
+    
+    except APITimeoutError:
+        logger.error(f"⏱️  TIMEOUT após {(datetime.now() - start_time).total_seconds():.2f}s")
+        return {
+            "success": False,
+            "error": "Timeout na análise. A imagem pode ser muito complexa ou o serviço está sobrecarregado. Tente novamente ou use uma imagem mais simples."
+        }
+    except APIError as e:
+        logger.error(f"❌ Erro da API: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Erro da API OpenAI: {str(e)}"
+        }    
     except Exception as e:
+        logger.error(f"❌ Erro inesperado: {str(e)}", exc_info=True)
         return {
             "success": False,
             "error": f"Erro na análise: {str(e)}"
@@ -168,6 +234,7 @@ def analyze_architecture_simple(image_path: str) -> str:
     Returns:
         str: Texto da análise
     """
+    logger.info(f"📋 analyze_architecture_simple chamado para: {image_path}")
     result = analyze_architecture(image_path)
     
     if not result.get("success", False):
@@ -191,14 +258,19 @@ if __name__ == "__main__":
         sys.exit(1)
     
     image_path = sys.argv[1]
-    print(f"Analisando: {image_path}")
-    print("-" * 80)
+    logger.info("="*80)
+    logger.info(f"MODO DE TESTE - Analisando: {image_path}")
+    logger.info("="*80)
     
     result = analyze_architecture(image_path)
     
     if result.get("success"):
-        print("✅ Análise concluída com sucesso!")
+        logger.info("="*80)
+        logger.info("✅ ANÁLISE CONCLUÍDA COM SUCESSO!")
+        logger.info("="*80)
         print("\nResultado:")
         print(json.dumps(result["analysis"], indent=2, ensure_ascii=False))
     else:
-        print(f"❌ Erro: {result.get('error')}")
+        logger.error("="*80)
+        logger.error(f"❌ ERRO NA ANÁLISE: {result.get('error')}")
+        logger.error("="*80)
