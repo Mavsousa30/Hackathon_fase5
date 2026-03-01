@@ -515,7 +515,7 @@ class STRIDEReportGenerator:
         # Nota final
         footer_text = """
         <b>Nota:</b> Este relatório foi gerado automaticamente usando Inteligência Artificial 
-        (GPT-4 Vision) para análise de diagramas de arquitetura. As ameaças e recomendações 
+        (GPT-4o-mini) para análise de diagramas de arquitetura. As ameaças e recomendações 
         identificadas devem ser revisadas por especialistas em segurança para validação e 
         adaptação ao contexto específico do projeto.
         """

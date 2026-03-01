@@ -125,17 +125,17 @@ def analyze_architecture(image_path: str) -> dict:
     """
     
     try:
-        logger.info("🤖 Enviando requisição para GPT-5-mini Vision...")
-        logger.info(f"   Modelo: gpt-5-mini")
+        logger.info("🤖 Enviando requisição para GPT-4o-mini Vision...")
+        logger.info(f"   Modelo: gpt-4o-mini")
         logger.info(f"   Max tokens: 8192")
         logger.info(f"   Temperature: 1")
         logger.info(f"   Timeout: 300s")
         
         api_start = datetime.now()
         
-        # Fazer chamada à API do OpenAI com GPT-5-mini Vision
+        # Fazer chamada à API do OpenAI com GPT-4o-mini Vision
         response = client.chat.completions.create(
-            model="gpt-5-mini",
+            model="gpt-4o-mini",
             messages=[
                 {
                     "role": "user",
@@ -151,8 +151,8 @@ def analyze_architecture(image_path: str) -> dict:
                     ]
                 }
             ],
-            max_completion_tokens=8192,
-            temperature=1
+            max_tokens=8192,
+            temperature=0.5
         )
         
         api_duration = (datetime.now() - api_start).total_seconds()
@@ -200,7 +200,7 @@ def analyze_architecture(image_path: str) -> dict:
         return {
             "success": True,
             "analysis": analysis_json,
-            "model": "gpt-5-mini",
+            "model": "gpt-4o-mini",
             "image_path": image_path
         }
     
