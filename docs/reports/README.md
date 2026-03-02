@@ -1,68 +1,33 @@
-# 📄 Relatórios de Exemplo
+# Relatorios de Exemplo
 
-Este diretório contém exemplos de relatórios PDF gerados pelo sistema STRIDE Threat Analyzer.
+Diretorio para relatorios PDF gerados pelo STRIDE Threat Analyzer.
 
-## 📋 Conteúdo
+## Como Gerar
 
-Os relatórios neste diretório são exemplos gerados durante testes do sistema e demonstram:
-
-- **Formato do relatório** - Estrutura e layout dos PDFs gerados
-- **Análise completa** - Como as ameaças são apresentadas
-- **Metodologia STRIDE** - Explicação da metodologia no relatório
-- **Contramedidas** - Sugestões de segurança por componente
-
-## 🎯 Como Gerar Novos Relatórios
-
-### Via Interface Web (Streamlit)
-
-1. Inicie a interface: `streamlit run app.py`
-2. Faça upload de um diagrama de arquitetura
-3. Clique em "Analisar Ameaças"
-4. Após a análise, clique em "Gerar Relatório PDF"
-5. Baixe o PDF gerado
+### Via Interface Web
+1. Acesse http://localhost:8501
+2. Faca upload de um diagrama de arquitetura
+3. Clique em "Analisar Ameacas"
+4. Clique em "Gerar Relatorio PDF"
+5. Baixe o PDF
 
 ### Via API REST
-
 ```bash
 curl -X POST "http://localhost:8000/analyze-pdf" \
-  -H "accept: application/pdf" \
-  -F "image=@caminho/para/diagrama.png" \
-  -o "meu_relatorio.pdf"
+  -F "image=@examples/test_diagram.png" \
+  -o relatorio_stride.pdf
 ```
 
-## 📦 Estrutura do Relatório
+## Estrutura do Relatorio
 
-Os relatórios PDF contêm:
+1. Capa com informacoes do relatorio
+2. Sumario executivo com metricas e grafico de severidade
+3. Diagrama de arquitetura analisado
+4. Analise detalhada por componente (ameacas + contramedidas)
+5. Fluxos de dados e comunicacao
+6. Recomendacoes gerais de seguranca
+7. Matriz STRIDE panoramica
+8. Trust boundaries (fronteiras de confianca)
+9. Sobre a metodologia STRIDE
 
-1. **Capa** - Título e informações do relatório
-2. **Sumário Executivo** - Métricas e visão geral
-3. **Diagrama Analisado** - Imagem do diagrama original
-4. **Análise Detalhada** - Ameaças por componente com:
-   - Categoria STRIDE
-   - Descrição da ameaça
-   - Nível de criticidade
-   - Contramedidas recomendadas
-5. **Fluxos de Dados** - Análise de comunicações entre componentes
-6. **Recomendações Gerais** - Boas práticas de segurança
-7. **Metodologia STRIDE** - Explicação da metodologia
-
-## 📊 Exemplos Disponíveis
-
-Os relatórios neste diretório são gerados a partir de:
-- Diagramas de teste simples
-- Arquiteturas de microserviços
-- Sistemas web (frontend + backend + database)
-- APIs e gateways
-
-## 🔒 Nota de Segurança
-
-Os relatórios de teste são automaticamente ignorados pelo Git (via `.gitignore`) para:
-- Não versionar arquivos temporários
-- Evitar informações sensíveis no repositório
-- Manter o repositório limpo
-
-Apenas mantenha exemplos públicos e sem informações confidenciais neste diretório.
-
----
-
-Para mais informações, consulte a [documentação principal](../README.md).
+> Nota: PDFs gerados sao ignorados pelo `.gitignore` para manter o repositorio limpo.

@@ -10,6 +10,9 @@ from reportlab.lib import colors
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_JUSTIFY
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, Image
 from reportlab.platypus.flowables import HRFlowable
+from reportlab.graphics.shapes import Drawing, String
+from reportlab.graphics.charts.piecharts import Pie
+from reportlab.graphics.charts.legends import Legend
 from datetime import datetime
 import json
 import os
@@ -152,10 +155,22 @@ class STRIDEReportGenerator:
         story.append(PageBreak())
         story.extend(self._create_stride_methodology())
         
-        # Gerar PDF
-        doc.build(story)
-        
+        # Gerar PDF com numeração de páginas
+        doc.build(story, onFirstPage=self._add_page_number, onLaterPages=self._add_page_number)
+
         return output_path
+
+    @staticmethod
+    def _add_page_number(canvas, doc):
+        """Adiciona número de página no rodapé"""
+        page_num = canvas.getPageNumber()
+        text = f"Página {page_num}"
+        canvas.saveState()
+        canvas.setFont('Helvetica', 8)
+        canvas.setFillColor(colors.grey)
+        canvas.drawCentredString(A4[0] / 2, 30, text)
+        canvas.drawRightString(A4[0] - 72, 30, "STRIDE Threat Analyzer - AI Powered")
+        canvas.restoreState()
     
     def _create_cover_page(self, data: dict):
         """Cria a página de capa do relatório"""
@@ -301,22 +316,115 @@ class STRIDEReportGenerator:
             ))
             elements.append(Spacer(1, 0.2*inch))
         
+        # Gráfico de distribuição de severidade
+        if total_ameacas > 0:
+            elements.append(Paragraph(
+                "<b>Distribuição de Ameaças por Severidade</b>",
+                self.styles['CustomSection']
+            ))
+            elements.append(Spacer(1, 0.1*inch))
+
+            # Extrair contagem por severidade
+            sev_alta = 0
+            sev_media = 0
+            sev_baixa = 0
+            if isinstance(data, dict):
+                resumo = data.get('resumo', {})
+                sev_alta = resumo.get('ameacas_alta', ameacas_criticas)
+                sev_media = resumo.get('ameacas_media', 0)
+                sev_baixa = resumo.get('ameacas_baixa', 0)
+                # Fallback: se não tiver o resumo, contar dos componentes
+                if sev_alta == 0 and sev_media == 0 and sev_baixa == 0:
+                    sev_alta = ameacas_criticas
+
+            chart = self._create_severity_chart(sev_alta, sev_media, sev_baixa)
+            if chart:
+                elements.append(chart)
+            elements.append(Spacer(1, 0.2*inch))
+
         # Descrição do sumário
         elements.append(Paragraph(
             "<b>Visão Geral da Análise</b>",
             self.styles['CustomSection']
         ))
-        
+
         summary_text = """
-        Este relatório apresenta uma análise completa de segurança baseada na metodologia STRIDE 
+        Este relatório apresenta uma análise completa de segurança baseada na metodologia STRIDE
         (Spoofing, Tampering, Repudiation, Information Disclosure, Denial of Service, Elevation of Privilege).
-        A análise foi realizada utilizando Inteligência Artificial para identificar potenciais ameaças 
+        A análise foi realizada utilizando Inteligência Artificial para identificar potenciais ameaças
         de segurança na arquitetura do sistema e fornecer recomendações práticas para mitigação.
         """
-        
+
         elements.append(Paragraph(summary_text, self.styles['CustomBody']))
-        
+
         return elements
+
+    def _create_severity_chart(self, alta, media, baixa):
+        """Cria gráfico de pizza com distribuição de severidade"""
+        total = alta + media + baixa
+        if total == 0:
+            return None
+
+        drawing = Drawing(400, 180)
+
+        pie = Pie()
+        pie.x = 80
+        pie.y = 10
+        pie.width = 140
+        pie.height = 140
+        pie.slices.strokeWidth = 1
+        pie.slices.strokeColor = colors.white
+
+        data_values = []
+        labels_list = []
+        pie_colors = []
+
+        if alta > 0:
+            data_values.append(alta)
+            pct = (alta / total) * 100
+            labels_list.append(f"Alta: {alta} ({pct:.0f}%)")
+            pie_colors.append(colors.HexColor('#cc0000'))
+        if media > 0:
+            data_values.append(media)
+            pct = (media / total) * 100
+            labels_list.append(f"Média: {media} ({pct:.0f}%)")
+            pie_colors.append(colors.HexColor('#ff9900'))
+        if baixa > 0:
+            data_values.append(baixa)
+            pct = (baixa / total) * 100
+            labels_list.append(f"Baixa: {baixa} ({pct:.0f}%)")
+            pie_colors.append(colors.HexColor('#009900'))
+
+        pie.data = data_values
+        pie.labels = labels_list
+
+        for i, c in enumerate(pie_colors):
+            pie.slices[i].fillColor = c
+            pie.slices[i].fontName = 'Helvetica'
+            pie.slices[i].fontSize = 9
+
+        # Legenda
+        legend = Legend()
+        legend.x = 260
+        legend.y = 100
+        legend.alignment = 'right'
+        legend.fontName = 'Helvetica'
+        legend.fontSize = 9
+        legend.dx = 10
+        legend.dy = 10
+        legend.dxTextSpace = 5
+        legend.deltay = 12
+        legend.colorNamePairs = list(zip(pie_colors, labels_list))
+
+        # Título do gráfico
+        title = String(200, 165, f"Total: {total} ameaças identificadas",
+                       fontName='Helvetica-Bold', fontSize=10, textAnchor='middle')
+
+        drawing.add(pie)
+        drawing.add(legend)
+        drawing.add(title)
+
+        return drawing
     
     def _add_diagram_image(self, image_path: str):
         """Adiciona a imagem do diagrama ao relatório"""

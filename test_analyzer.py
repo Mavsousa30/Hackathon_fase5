@@ -3,7 +3,7 @@ Script de Teste do Analisador STRIDE
 Demonstra o uso básico do analyzer.py
 """
 
-from analyzer import analyze_architecture, analyze_architecture_simple
+from analyzer import analyze_architecture
 import json
 import os
 
@@ -104,11 +104,6 @@ def demo_stride_knowledge():
 if __name__ == "__main__":
     # Executar teste do analisador
     test_analyzer()
-    
+
     # Demonstrar base de conhecimento
     demo_stride_knowledge()
-    
-    print("\n\n💡 Próximos passos:")
-    print("   1. Adicione mais imagens em 'examples/' para testar")
-    print("   2. Implemente a Fase 4: API REST com FastAPI")
-    print("   3. Implemente a Fase 5: Interface Web com Streamlit")

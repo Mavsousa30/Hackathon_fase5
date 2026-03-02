@@ -1,5 +1,5 @@
 """
-Analisador de Arquitetura com GPT-5-mini Vision
+Analisador de Arquitetura com GPT-4o Vision
 Aplica a metodologia STRIDE em diagramas de arquitetura
 """
 
@@ -36,11 +36,11 @@ client = OpenAI(
 
 def analyze_architecture(image_path: str) -> dict:
     """
-    Analisa um diagrama de arquitetura usando GPT-5-mini Vision e aplica STRIDE
-    
+    Analisa um diagrama de arquitetura usando GPT-4o Vision e aplica STRIDE
+
     Args:
         image_path: Caminho para o arquivo de imagem da arquitetura
-        
+
     Returns:
         dict: Resultado da análise com ameaças identificadas e contramedidas
     """
@@ -64,59 +64,90 @@ def analyze_architecture(image_path: str) -> dict:
         logger.error(f"❌ Erro ao ler arquivo: {str(e)}")
         return {"error": f"Erro ao ler arquivo: {str(e)}"}
     
-    # Importar conhecimento STRIDE (versão simplificada para o prompt)
-    from stride_knowledge import STRIDE_DETAILS, COUNTERMEASURES
-    
+    # Importar conhecimento STRIDE para enriquecer o prompt e a análise
+    from stride_knowledge import STRIDE_DETAILS, COUNTERMEASURES, STRIDE_PER_COMPONENT_TYPE, enrich_analysis
+
+    # Listar tipos de componentes conhecidos para guiar a detecção
+    tipos_conhecidos = list(STRIDE_PER_COMPONENT_TYPE.keys())
+
     # Prompt aprimorado para análise STRIDE exaustiva
     prompt = f"""
-    EXECUTE A ANÁLISE STRIDE AGORA. Analise o diagrama de arquitetura fornecido e retorne o JSON conforme especificado.
-    
-    IMPORTANTE: Você DEVE analisar a imagem fornecida e retornar o JSON estruturado. NÃO recuse ou forneça apenas orientações gerais.
-    
+    EXECUTE A ANÁLISE STRIDE COMPLETA E EXAUSTIVA. Analise o diagrama de arquitetura fornecido e retorne o JSON.
+
+    IMPORTANTE: Você DEVE analisar a imagem e identificar ABSOLUTAMENTE TODOS os componentes visíveis.
+    NÃO OMITA nenhum componente. Em arquiteturas cloud típicas existem 10-20+ componentes.
+
+    REGRAS OBRIGATÓRIAS:
+    - Identifique no MÍNIMO 10 componentes (arquiteturas cloud possuem tipicamente 12-20+)
+    - Cada componente DEVE ter ameaças de pelo menos 2-3 categorias STRIDE DIFERENTES
+    - Identifique pelo menos 3 trust boundaries
+    - Identifique pelo menos 5 fluxos de dados
+    - Forneça pelo menos 5 recomendações gerais
+
+    TIPOS DE COMPONENTES QUE VOCÊ DEVE PROCURAR (identifique TODOS que estiverem presentes):
+    - Usuários/Clientes/Browsers/Mobile Apps (user)
+    - Load Balancers - ALB, NLB, ELB, Azure LB (loadbalancer)
+    - Servidores de Aplicação - EC2, App Service, ECS, Lambda (server)
+    - Bancos de Dados Primários - RDS Primary, Aurora, SQL Server (database)
+    - Bancos de Dados Réplica/Secondary - RDS Read Replica, Standby, Secondary (database)
+    - APIs e API Gateways - API Gateway, APIM, Kong (api, gateway)
+    - CDNs - CloudFront, Akamai, Azure CDN (cdn)
+    - Firewalls e WAFs - AWS WAF, Azure WAF, Firewall (firewall, waf)
+    - Serviços de Cache - ElastiCache, Redis, Memcached (cache)
+    - Filas de Mensagem - SQS, SNS, RabbitMQ, Kafka, Service Bus (queue)
+    - Armazenamento de Objetos - S3, Blob Storage (storage)
+    - Armazenamento de Arquivos - EFS, FSx, Azure Files (storage)
+    - Serviços de Autenticação - IAM, Entra ID, Cognito, Active Directory (auth)
+    - Monitoramento - CloudWatch, CloudTrail, App Insights, X-Ray (monitoring)
+    - Email - SES, SendGrid, Exchange (email)
+    - Backup - AWS Backup, Azure Backup, Snapshots (backup)
+    - Criptografia/KMS - AWS KMS, Key Vault, HSM, Certificate Manager (encryption)
+    - Proteção DDoS - AWS Shield, Azure DDoS Protection (security)
+    - Orquestração - Logic Apps, Step Functions, EventBridge (server)
+    - Developer Portal, Swagger/OpenAPI endpoints (api)
+    - DNS - Route 53, Azure DNS, CloudFlare (server)
+    - VPC/VNet, Subnets, Security Groups, NSGs (firewall)
+
+    IMPORTANTE: Se existirem réplicas, instâncias secondary ou standby de bancos de dados,
+    liste-as como componentes SEPARADOS (ex: "Amazon RDS Primary" e "Amazon RDS Read Replica").
+
     METODOLOGIA STRIDE:
-    - S (Spoofing): Riscos de falsificação de identidade
-    - T (Tampering): Riscos de adulteração de dados
-    - R (Repudiation): Riscos de negação de ações
-    - I (Information Disclosure): Riscos de vazamento de informação
-    - D (Denial of Service): Riscos de indisponibilidade
-    - E (Elevation of Privilege): Riscos de escalação de privilégios
-    
-    PASSOS DA ANÁLISE:
-    
-    1. Examine a imagem e identifique TODOS os componentes visíveis (servidores, bancos de dados, load balancers, 
-       CDNs, firewalls, serviços de nuvem, sistemas de backup, logs, monitoring, etc.)
-    
-    2. Identifique trust boundaries (Internet↔Cloud, Public↔Private Subnet, camadas de aplicação, etc.)
-    
-    3. Para cada componente, aplique análise STRIDE completa identificando 2-3 ameaças por componente
-    
-    4. Identifique fluxos de dados entre componentes
-    
-    5. Proponha contramedidas específicas para cada ameaça
-    
-    6. Calcule risk score de 0-10 baseado na quantidade e severidade das ameaças
-    
-    ## FORMATO DE RESPOSTA JSON (OBRIGATÓRIO):
-    
+    - S (Spoofing): Falsificação de identidade → Foco: Autenticação
+    - T (Tampering): Adulteração de dados → Foco: Integridade
+    - R (Repudiation): Negação de ações → Foco: Não-repúdio/Auditoria
+    - I (Information Disclosure): Vazamento de informação → Foco: Confidencialidade
+    - D (Denial of Service): Indisponibilidade → Foco: Disponibilidade
+    - E (Elevation of Privilege): Escalação de privilégios → Foco: Autorização
+
+    TRUST BOUNDARIES COMUNS A IDENTIFICAR:
+    - Internet ↔ Rede Cloud (Edge/Perímetro)
+    - Zona Pública (Public Subnet) ↔ Zona Privada (Private Subnet)
+    - Camada de Aplicação ↔ Camada de Dados
+    - VPC/VNet ↔ Serviços Gerenciados Externos
+    - Diferentes Availability Zones ou Regiões
+    - Rede Interna ↔ Serviços de Terceiros (SaaS)
+
+    FORMATO DE RESPOSTA JSON (OBRIGATÓRIO):
+
     {{
         "componentes": [
             {{
-                "nome": "nome completo do componente",
-                "tipo": "database|api|server|user|loadbalancer|cache|cdn|firewall|auth|monitoring|backup|email|storage|...",
-                "descricao": "descrição detalhada do componente e função na arquitetura",
+                "nome": "nome completo do componente (ex: Amazon RDS Primary)",
+                "tipo": "{"|".join(tipos_conhecidos)}",
+                "descricao": "descrição detalhada da função na arquitetura",
                 "ameacas": [
                     {{
                         "categoria": "S|T|R|I|D|E",
-                        "nome_ameaca": "nome curto da ameaça",
-                        "descricao": "descrição detalhada da ameaça e como pode ser explorada",
+                        "nome_ameaca": "nome curto e específico da ameaça",
+                        "descricao": "como a ameaça pode ser explorada neste componente específico",
                         "severidade": "Alta|Média|Baixa",
-                        "impacto": "descrição do impacto se explorada"
+                        "impacto": "impacto concreto se explorada"
                     }}
                 ],
                 "contramedidas": [
                     {{
-                        "ameaca_relacionada": "categoria STRIDE",
-                        "contramedida": "descrição detalhada da contramedida",
+                        "ameaca_relacionada": "S|T|R|I|D|E",
+                        "contramedida": "contramedida técnica específica",
                         "prioridade": "Alta|Média|Baixa"
                     }}
                 ]
@@ -124,12 +155,12 @@ def analyze_architecture(image_path: str) -> dict:
         ],
         "trust_boundaries": [
             {{
-                "nome": "nome da fronteira",
-                "descricao": "descrição da fronteira de confiança",
+                "nome": "nome descritivo (ex: Internet↔AWS Cloud)",
+                "descricao": "descrição da fronteira e por que é crítica",
                 "componente_origem": "zona/camada de origem",
                 "componente_destino": "zona/camada de destino",
                 "controles_existentes": ["controle 1", "controle 2"],
-                "ameacas": ["ameaça ao atravessar esta fronteira"],
+                "ameacas": ["ameaça específica nesta fronteira"],
                 "contramedidas_recomendadas": ["contramedida 1", "contramedida 2"]
             }}
         ],
@@ -137,18 +168,17 @@ def analyze_architecture(image_path: str) -> dict:
             {{
                 "origem": "componente origem",
                 "destino": "componente destino",
-                "tipo_dados": "tipo de dados trafegados",
-                "protocolo": "protocolo usado (HTTP, HTTPS, TCP, etc)",
-                "criptografado": true/false,
-                "autenticado": true/false,
-                "atravessa_trust_boundary": true/false,
-                "ameacas": ["ameaça 1", "ameaça 2"],
-                "contramedidas": ["contramedida 1", "contramedida 2"]
+                "tipo_dados": "tipo de dados (ex: credenciais, dados de negócio, logs)",
+                "protocolo": "HTTPS|HTTP|TCP|TLS|gRPC|AMQP|etc",
+                "criptografado": true,
+                "autenticado": true,
+                "atravessa_trust_boundary": true,
+                "ameacas": ["ameaça específica neste fluxo"],
+                "contramedidas": ["contramedida para este fluxo"]
             }}
         ],
         "matriz_stride": {{
-            "componente_1": {{"S": true, "T": true, "R": false, "I": true, "D": true, "E": false}},
-            "componente_2": {{"S": true, "T": false, "R": true, "I": true, "D": true, "E": true}}
+            "Nome Componente": {{"S": true, "T": true, "R": false, "I": true, "D": true, "E": false}}
         }},
         "resumo": {{
             "total_componentes": 0,
@@ -158,23 +188,23 @@ def analyze_architecture(image_path: str) -> dict:
             "ameacas_media": 0,
             "ameacas_baixa": 0,
             "risk_score": 7.5,
-            "risk_justificativa": "justificativa do score calculado"
+            "risk_justificativa": "justificativa detalhada do score baseada na análise"
         }},
         "recomendacoes_gerais": [
             {{
-                "categoria": "categoria da recomendação",
-                "recomendacao": "recomendação detalhada",
+                "categoria": "Autenticação|Criptografia|Monitoramento|Rede|Dados|Acesso|Resiliência|Compliance",
+                "recomendacao": "recomendação técnica detalhada e acionável",
                 "prioridade": "Alta|Média|Baixa"
             }}
         ]
     }}
-    
-    
+
+
     RETORNE APENAS O OBJETO JSON. Não inclua explicações, guias ou texto adicional.
     Comece sua resposta diretamente com {{ e termine com }}.
-    
-    Se você não conseguir analisar perfeitamente todos os detalhes, faça o melhor possível baseado no que consegue 
-    identificar na imagem. SEMPRE retorne o JSON estruturado conforme especificado.
+
+    LEMBRE-SE: Identifique TODOS os componentes (mínimo 10), com MÚLTIPLAS ameaças STRIDE cada (mínimo 2-3 categorias diferentes por componente).
+    Inclua réplicas, instâncias secondary e serviços auxiliares como componentes separados.
     """
     
     try:
@@ -250,10 +280,24 @@ def analyze_architecture(image_path: str) -> dict:
                 "note": "Não foi possível parsear como JSON"
             }
         
+        # Enriquecer análise com knowledge base STRIDE
+        if isinstance(analysis_json, dict) and 'componentes' in analysis_json:
+            logger.info("🔧 Enriquecendo análise com knowledge base STRIDE...")
+            componentes_antes = len(analysis_json.get('componentes', []))
+            ameacas_antes = sum(len(c.get('ameacas', [])) for c in analysis_json.get('componentes', []))
+
+            analysis_json = enrich_analysis(analysis_json)
+
+            ameacas_depois = sum(len(c.get('ameacas', [])) for c in analysis_json.get('componentes', []))
+            logger.info(f"   Componentes: {componentes_antes}")
+            logger.info(f"   Ameaças antes do enriquecimento: {ameacas_antes}")
+            logger.info(f"   Ameaças após enriquecimento: {ameacas_depois}")
+            logger.info(f"   Ameaças adicionadas pelo knowledge base: {ameacas_depois - ameacas_antes}")
+
         total_duration = (datetime.now() - start_time).total_seconds()
         logger.info(f"✅ Análise completa em {total_duration:.2f}s")
         logger.info(f"   Componentes encontrados: {len(analysis_json.get('componentes', []))}")
-        
+
         return {
             "success": True,
             "analysis": analysis_json,

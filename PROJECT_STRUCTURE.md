@@ -1,262 +1,168 @@
-# 🗂️ Estrutura do Projeto STRIDE Threat Analyzer
+# Estrutura do Projeto STRIDE Threat Analyzer
 
-Este documento descreve a organização completa dos arquivos e diretórios do projeto.
+Este documento descreve a organização dos arquivos e o fluxo de processamento do projeto.
 
-## 📁 Estrutura de Diretórios
-
-```
-STRIDE-Threat-Analyzer/
-│
-├── 📄 README.md                          # Documentação principal do projeto
-├── 📄 requirements.txt                   # Dependências Python
-├── 📄 .env.example                       # Exemplo de configuração
-├── 📄 .gitignore                         # Arquivos ignorados pelo Git
-│
-├── 🐍 Código Fonte Principal
-│   ├── main.py                          # API FastAPI
-│   ├── app.py                           # Interface Web Streamlit
-│   ├── analyzer.py                      # Analisador com GPT-4 Vision
-│   ├── pdf_generator.py                 # Gerador de relatórios PDF
-│   ├── stride_knowledge.py              # Base de conhecimento STRIDE
-│   └── test_analyzer.py                 # Script de testes
-│
-├── 📚 docs/                             # Documentação completa
-│   ├── README.md                        # Índice da documentação
-│   ├── QUICKSTART.md                    # Guia de início rápido
-│   ├── PLANO_IMPLEMENTACAO_SIMPLIFICADO.md
-│   ├── AVALIACAO_PROJETO.md            # Relatório de testes
-│   ├── IADT - Fase 5 - Hackaton.pdf   # Documento do hackathon
-│   └── reports/                        # Relatórios de exemplo
-│       ├── README.md                   # Info sobre relatórios
-│       ├── .gitkeep                    # Mantém dir no Git
-│       ├── test_report.pdf             # Exemplo 1
-│       └── novo_test_report.pdf        # Exemplo 2
-│
-├── 📸 examples/                         # Diagramas de exemplo
-│   └── README.md                       # Info sobre exemplos
-│
-├── 🔧 .venv/                           # Ambiente virtual Python
-└── 🗑️  __pycache__/                    # Cache Python (ignorado)
-```
-
-## 📋 Descrição dos Arquivos
-
-### Arquivos de Configuração
-
-| Arquivo | Descrição |
-|---------|-----------|
-| `README.md` | Documentação principal com overview do projeto |
-| `requirements.txt` | Lista de dependências Python necessárias |
-| `.env.example` | Exemplo de variáveis de ambiente |
-| `.env` | Configuração real (não versionado) |
-| `.gitignore` | Arquivos e diretórios ignorados pelo Git |
-
-### Código Fonte
-
-| Arquivo | Responsabilidade |
-|---------|------------------|
-| `main.py` | API REST com FastAPI - endpoints de análise |
-| `app.py` | Interface web com Streamlit - UI do usuário |
-| `analyzer.py` | Módulo de análise com GPT-4 Vision |
-| `pdf_generator.py` | Geração de relatórios PDF profissionais |
-| `stride_knowledge.py` | Base de conhecimento da metodologia STRIDE |
-| `test_analyzer.py` | Scripts de teste e demonstração |
-
-### Documentação (`docs/`)
-
-| Arquivo | Conteúdo |
-|---------|----------|
-| `README.md` | Índice completo da documentação |
-| `QUICKSTART.md` | Tutorial rápido de uso |
-| `PLANO_IMPLEMENTACAO_SIMPLIFICADO.md` | Arquitetura e planejamento |
-| `AVALIACAO_PROJETO.md` | Resultados de testes e validações |
-| `IADT - Fase 5 - Hackaton.pdf` | Documento oficial do hackathon |
-
-### Relatórios de Exemplo (`docs/reports/`)
-
-Contém exemplos de PDFs gerados pelo sistema demonstrando:
-- Formato e estrutura dos relatórios
-- Análise STRIDE completa
-- Contramedidas e recomendações
-
-### Exemplos (`examples/`)
-
-Diretório para armazenar diagramas de arquitetura de teste:
-- Diagramas PNG/JPG/JPEG
-- Exemplos de diferentes arquiteturas
-- Material para testes e demonstrações
-
-## 🔄 Fluxo de Dados
+## Estrutura de Diretorios
 
 ```
-┌─────────────────┐
-│  User uploads   │
-│    diagram      │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   app.py        │  ◄── Interface Streamlit
-│  (Streamlit)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│   main.py       │  ◄── API REST
-│   (FastAPI)     │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  analyzer.py    │  ◄── Análise com IA
-│  (GPT-4 Vision) │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ stride_knowledge│  ◄── Base de conhecimento
-│      .py        │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│pdf_generator.py │  ◄── Geração de PDF
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│  PDF Report     │  ◄── Relatório final
-│   Download      │
-└─────────────────┘
+Hackathon_fase5/
+├── README.md                  # Documentacao principal do projeto
+├── PROJECT_STRUCTURE.md       # Este arquivo
+├── requirements.txt           # Dependencias Python
+├── .env.example               # Exemplo de configuracao
+├── .gitignore                 # Arquivos ignorados pelo Git
+├── .python-version            # Versao do Python
+│
+├── main.py                    # API REST (FastAPI)
+├── app.py                     # Interface Web (Streamlit)
+├── analyzer.py                # Motor de analise com GPT-4o Vision
+├── stride_knowledge.py        # Base de conhecimento STRIDE + enriquecimento
+├── pdf_generator.py           # Gerador de relatorios PDF (ReportLab)
+├── test_analyzer.py           # Script de testes e demonstracao
+│
+├── docs/                      # Documentacao
+│   ├── README.md              # Indice da documentacao
+│   ├── QUICKSTART.md          # Guia de inicio rapido
+│   ├── IADT - Fase 5 - Hackaton.pdf  # Especificacao do hackathon
+│   └── reports/               # Relatorios PDF de exemplo
+│       └── README.md
+│
+└── examples/                  # Diagramas de exemplo para testes
+    ├── README.md
+    └── test_diagram.png
 ```
 
-## 📊 Responsabilidades por Módulo
+## Fluxo de Processamento
 
-### `main.py` - API Backend
-- ✅ Expõe endpoints REST
-- ✅ Valida uploads de imagens
-- ✅ Gerencia arquivos temporários
-- ✅ Retorna análises em JSON ou PDF
-- ✅ Documentação automática (Swagger)
+O pipeline completo de analise segue este fluxo:
 
-### `app.py` - Interface Frontend
-- ✅ Interface web amigável
-- ✅ Upload de diagramas
-- ✅ Visualização de resultados
-- ✅ Download de relatórios
-- ✅ Gestão de estado da sessão
+```
+┌──────────────────┐
+│  Usuario faz     │
+│  upload do       │
+│  diagrama (.png) │
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│   app.py         │  Interface Streamlit (porta 8501)
+│   (Streamlit)    │  Recebe imagem, exibe resultados
+└────────┬─────────┘
+         │ POST /analyze
+         ▼
+┌──────────────────┐
+│   main.py        │  API REST FastAPI (porta 8000)
+│   (FastAPI)      │  Valida arquivo, salva temporario
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  analyzer.py     │  Motor de Analise
+│  (GPT-4o Vision) │  1. Codifica imagem em base64
+│                  │  2. Envia para GPT-4o com prompt STRIDE
+│                  │  3. Parseia resposta JSON
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│stride_knowledge  │  Enriquecimento com Knowledge Base
+│      .py         │  1. Complementa categorias STRIDE faltantes
+│                  │  2. Adiciona descricoes e impactos detalhados
+│                  │  3. Recalcula metricas do resumo
+│                  │  4. Atualiza matriz STRIDE
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│pdf_generator.py  │  Geracao de Relatorio PDF
+│  (ReportLab)     │  Capa, sumario, graficos, analise
+│                  │  detalhada, matriz, trust boundaries
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│  Relatorio PDF   │  17+ paginas com analise completa
+│  + JSON          │  Download via interface web
+└──────────────────┘
+```
 
-### `analyzer.py` - Motor de Análise
-- ✅ Integração com OpenAI GPT-4 Vision
-- ✅ Processamento de imagens
-- ✅ Aplicação da metodologia STRIDE
-- ✅ Estruturação de resultados
+## Descricao dos Modulos
 
-### `pdf_generator.py` - Gerador de Relatórios
-- ✅ Criação de PDFs profissionais
-- ✅ Formatação de conteúdo
-- ✅ Inclusão de diagramas
-- ✅ Tabelas e gráficos
-- ✅ Branding e layout
+### `analyzer.py` - Motor de Analise com IA
 
-### `stride_knowledge.py` - Base de Conhecimento
-- ✅ Definições STRIDE
-- ✅ Ameaças por tipo de componente
-- ✅ Contramedidas recomendadas
-- ✅ Melhores práticas de segurança
+- Recebe caminho da imagem do diagrama de arquitetura
+- Codifica em base64 e envia para GPT-4o Vision
+- Prompt exaustivo solicita minimo 10 componentes, 3 trust boundaries, 5 fluxos
+- Identifica componentes, ameacas STRIDE, contramedidas, fluxos de dados
+- Apos receber resposta do LLM, chama `enrich_analysis()` para complementar
+- Retorna JSON estruturado com analise completa
 
-## 🚀 Pontos de Entrada
+### `stride_knowledge.py` - Base de Conhecimento e Enriquecimento
 
-| Comando | Componente | Porta | Descrição |
+- `STRIDE_PER_COMPONENT_TYPE`: mapeamento de 18 tipos de componente para ameacas STRIDE
+- `_ENRICHED_DESCRIPTIONS`: descricoes detalhadas por categoria+tipo (108 combinacoes)
+- `_ENRICHED_IMPACTS`: impactos contextualizados por categoria+tipo
+- `enrich_analysis()`: complementa categorias STRIDE faltantes na analise do LLM
+- `_find_matrix_key()`: evita duplicatas na matriz STRIDE por correspondencia de nomes
+- `COUNTERMEASURES`: contramedidas padrao por categoria STRIDE
+
+### `pdf_generator.py` - Gerador de Relatorios
+
+- Classe `STRIDEReportGenerator` baseada em ReportLab
+- Gera capa profissional, sumario executivo com grafico de pizza
+- Analise detalhada por componente com ameacas e contramedidas
+- Secoes: fluxos de dados, recomendacoes, matriz STRIDE, trust boundaries
+- Numeracao de paginas automatica
+
+### `main.py` - API REST
+
+- `POST /analyze`: recebe imagem, retorna analise JSON
+- `POST /analyze-pdf`: recebe imagem, retorna relatorio PDF
+- `GET /health`: health check
+- `GET /stride-info`: informacoes sobre a metodologia STRIDE
+- Validacao de tipo e tamanho de arquivo (max 10MB)
+
+### `app.py` - Interface Web
+
+- Upload de imagem com preview
+- Botao de analise com spinner de progresso
+- Exibicao de resultados JSON
+- Download de relatorio JSON e PDF
+- Sidebar com status da API e dicas de uso
+
+## Pontos de Entrada
+
+| Comando | Componente | Porta | Descricao |
 |---------|-----------|-------|-----------|
-| `python3 main.py` | API | 8000 | Inicia servidor FastAPI |
+| `uvicorn main:app --reload` | API | 8000 | Inicia servidor FastAPI |
 | `streamlit run app.py` | Web UI | 8501 | Inicia interface Streamlit |
-| `python3 analyzer.py <imagem>` | CLI | - | Análise direta via terminal |
-| `python3 test_analyzer.py` | Testes | - | Executa testes do sistema |
+| `python analyzer.py <imagem>` | CLI | - | Analise direta via terminal |
+| `python test_analyzer.py` | Testes | - | Executa testes do sistema |
 
-## 📦 Dependências Principais
+## Dependencias Principais
 
 Definidas em `requirements.txt`:
 
-- **openai** - Integração com GPT-4 Vision
-- **fastapi** - Framework web para API
-- **uvicorn** - Servidor ASGI
-- **streamlit** - Interface web interativa
-- **pillow** - Processamento de imagens
-- **reportlab** - Geração de PDFs
-- **python-dotenv** - Gestão de variáveis de ambiente
-- **requests** - Cliente HTTP
+| Pacote | Uso |
+|--------|-----|
+| `openai` | Integracao com GPT-4o Vision |
+| `fastapi` | Framework para API REST |
+| `uvicorn` | Servidor ASGI |
+| `streamlit` | Interface web interativa |
+| `pillow` | Processamento de imagens |
+| `reportlab` | Geracao de PDFs |
+| `python-dotenv` | Variaveis de ambiente |
+| `requests` | Requisicoes HTTP |
 
-## 🔒 Arquivos Sensíveis (Não Versionados)
+## Arquivos Nao Versionados
 
-- `.env` - Contém API keys (nunca commitar!)
-- `.venv/` - Ambiente virtual Python
-- `__pycache__/` - Cache de bytecode Python
-- `docs/reports/*.pdf` - Relatórios de teste
-
-## 📝 Convenções
-
-### Nomenclatura de Arquivos
-- Módulos Python: `snake_case.py`
-- Documentação: `UPPERCASE.md` ou `CamelCase.md`
-- Configuração: `.lowercase` ou `.lowercase.example`
-
-### Estrutura de Código
-- Classes: `PascalCase`
-- Funções: `snake_case`
-- Constantes: `UPPER_SNAKE_CASE`
-- Variáveis: `snake_case`
-
-### Documentação
-- Docstrings em inglês no código
-- Documentação externa em português
-- Comentários em português
-- README em português com emojis
-
-## 🔄 Versionamento
-
-```
-docs/reports/        ← Ignorado (arquivos temporários)
-.env                 ← Ignorado (credenciais)
-.venv/               ← Ignorado (ambiente local)
-__pycache__/         ← Ignorado (cache Python)
-*.pyc                ← Ignorado (bytecode)
-```
-
-## 📚 Documentação Adicional
-
-Para informações mais detalhadas, consulte:
-
-- [README Principal](../README.md) - Overview do projeto
-- [Quick Start](docs/QUICKSTART.md) - Como começar
-- [Índice de Documentação](docs/README.md) - Toda documentação
-- [Relatórios de Exemplo](docs/reports/README.md) - Exemplos de output
-
-## 🎯 Próximas Expansões
-
-Para expandir o projeto, considere adicionar:
-
-```
-├── tests/                    # Testes automatizados
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-│
-├── scripts/                  # Scripts auxiliares
-│   ├── deploy.sh
-│   └── backup.sh
-│
-├── data/                     # Dados persistentes
-│   ├── cache/
-│   └── history/
-│
-└── docker/                   # Containerização
-    ├── Dockerfile
-    └── docker-compose.yml
-```
+- `.env` - Contem API keys (nunca commitar)
+- `venv/` - Ambiente virtual Python
+- `__pycache__/` - Cache de bytecode
+- `*.log` - Logs de execucao
+- `*.pdf` - Relatorios gerados (exceto especificacao do hackathon)
 
 ---
 
-**Última atualização**: Fevereiro 2026  
-**Versão do projeto**: MVP Fase 5 Completa  
-**Status**: ✅ Produção
+**Versao do projeto**: MVP Completo
+**Status**: Producao

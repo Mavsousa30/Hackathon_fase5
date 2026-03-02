@@ -125,17 +125,17 @@ with col2:
         if not st.session_state.get('analysis_result'):
             if st.button("🚀 Analisar Ameaças", type="primary", use_container_width=True):
                 
-                with st.spinner("🤖 Analisando arquitetura com IA... Isso pode levar alguns segundos..."):
+                with st.spinner("🤖 Analisando arquitetura com IA... A análise STRIDE completa pode levar até 2 minutos..."):
                     try:
                         # Resetar o ponteiro do arquivo
                         uploaded_file.seek(0)
-                        
-                        # Fazer requisição para a API
+
+                        # Fazer requisição para a API (timeout alto para análise exaustiva com GPT-4o)
                         files = {"image": (uploaded_file.name, uploaded_file, uploaded_file.type)}
                         response = requests.post(
                             f"{API_URL}/analyze",
                             files=files,
-                            timeout=60
+                            timeout=300
                         )
                         
                         if response.ok:
@@ -183,28 +183,10 @@ with col2:
             result = st.session_state['analysis_result']
             
             st.subheader("📊 Resultado da Análise")
-            
-            # Se o resultado for um dict com 'analysis'
-            if isinstance(result, dict) and "analysis" in result:
-                analysis = result["analysis"]
-                
-                # Tentar parsear como JSON se for string
-                if isinstance(analysis, str):
-                    try:
-                        analysis_json = json.loads(analysis)
-                        st.json(analysis_json)
-                    except:
-                        st.markdown(analysis)
-                else:
-                    st.json(analysis)
-            else:
-                st.json(result)
-            
-            st.divider()
-            
-            # Opções de download lado a lado
-            col_download1, col_download2 = st.columns(2)
-            
+
+            # Botões de download e ações no topo (antes do JSON)
+            col_download1, col_download2, col_new = st.columns(3)
+
             with col_download1:
                 st.download_button(
                     label="💾 Baixar Relatório (JSON)",
@@ -214,7 +196,7 @@ with col2:
                     use_container_width=True,
                     key="download_json"
                 )
-            
+
             with col_download2:
                 # Botão para gerar PDF
                 if not st.session_state.get('pdf_data'):
@@ -225,7 +207,7 @@ with col2:
                                 with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
                                     tmp_img.write(st.session_state['image_bytes'])
                                     tmp_img_path = tmp_img.name
-                                
+
                                 # Gerar PDF
                                 pdf_path = tempfile.mktemp(suffix=".pdf")
                                 # Usar os dados de análise extraídos corretamente
@@ -235,20 +217,20 @@ with col2:
                                     pdf_path,
                                     tmp_img_path
                                 )
-                                
+
                                 # Ler PDF gerado
                                 with open(pdf_path, "rb") as pdf_file:
                                     pdf_data = pdf_file.read()
-                                
+
                                 # Limpar arquivos temporários
                                 os.unlink(tmp_img_path)
                                 os.unlink(pdf_path)
-                                
+
                                 # Armazenar PDF na sessão
                                 st.session_state['pdf_data'] = pdf_data
                                 st.success("✅ PDF gerado com sucesso!")
                                 st.rerun()
-                                
+
                             except Exception as e:
                                 st.error(f"❌ Erro ao gerar PDF: {str(e)}")
                 else:
@@ -261,18 +243,35 @@ with col2:
                         use_container_width=True,
                         key="download_pdf"
                     )
-            
+
+            with col_new:
+                # Botão para nova análise
+                if st.button("🔄 Nova Análise", type="primary", use_container_width=True):
+                    # Limpar sessão
+                    st.session_state['analysis_result'] = None
+                    st.session_state['analysis_data'] = None
+                    st.session_state['pdf_data'] = None
+                    st.session_state['image_bytes'] = None
+                    st.session_state['file_name'] = None
+                    st.rerun()
+
             st.divider()
-            
-            # Botão para nova análise
-            if st.button("🔄 Nova Análise", type="primary", use_container_width=True):
-                # Limpar sessão
-                st.session_state['analysis_result'] = None
-                st.session_state['analysis_data'] = None
-                st.session_state['pdf_data'] = None
-                st.session_state['image_bytes'] = None
-                st.session_state['file_name'] = None
-                st.rerun()
+
+            # Exibir resultado JSON abaixo dos botões
+            if isinstance(result, dict) and "analysis" in result:
+                analysis = result["analysis"]
+
+                # Tentar parsear como JSON se for string
+                if isinstance(analysis, str):
+                    try:
+                        analysis_json = json.loads(analysis)
+                        st.json(analysis_json)
+                    except:
+                        st.markdown(analysis)
+                else:
+                    st.json(analysis)
+            else:
+                st.json(result)
     else:
         st.info("👆 Faça upload de um diagrama para começar a análise")
 

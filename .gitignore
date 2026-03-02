@@ -29,9 +29,10 @@ Thumbs.db
 temp/
 tmp/
 
-# Test reports (keep structure, ignore PDFs)
+# Generated reports
 docs/reports/*.pdf
-!docs/reports/.gitkeep
+*.pdf
+!docs/IADT*.pdf
 
 # Jupyter Notebook
 .ipynb_checkpoints
