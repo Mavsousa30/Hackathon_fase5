@@ -8,9 +8,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from analyzer import analyze_architecture
 from pdf_generator import generate_stride_pdf_report
+from stride_knowledge import STRIDE, STRIDE_DETAILS
 import tempfile
 import os
 from typing import Dict, Any
+
+# Constantes de validação
+ALLOWED_CONTENT_TYPES = {"image/png", "image/jpeg", "image/jpg"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
 # Inicializar aplicação FastAPI
 app = FastAPI(
@@ -59,6 +64,38 @@ async def health():
     }
 
 
+def _validate_image(image: UploadFile) -> None:
+    """Valida tipo de conteúdo do arquivo de imagem."""
+    if image.content_type not in ALLOWED_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Tipo de arquivo não suportado. Use PNG, JPG ou JPEG. Recebido: {image.content_type}"
+        )
+
+
+async def _save_temp_image(image: UploadFile) -> tuple[str, bytes]:
+    """Salva imagem em arquivo temporário após validar tamanho. Retorna (caminho, conteúdo)."""
+    content = await image.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail="Arquivo muito grande. Tamanho máximo: 10MB"
+        )
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
+        tmp.write(content)
+        return tmp.name, content
+
+
+def _cleanup_files(*paths: str) -> None:
+    """Remove arquivos temporários de forma segura."""
+    for path in paths:
+        if path and os.path.exists(path):
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+
+
 @app.post("/analyze")
 async def analyze(image: UploadFile = File(...)) -> Dict[str, Any]:
     """
@@ -70,39 +107,13 @@ async def analyze(image: UploadFile = File(...)) -> Dict[str, Any]:
     Returns:
         JSON com a análise completa de ameaças STRIDE
     """
-    
-    # Validar tipo de arquivo
-    allowed_types = ["image/png", "image/jpeg", "image/jpg"]
-    if image.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Tipo de arquivo não suportado. Use PNG, JPG ou JPEG. Recebido: {image.content_type}"
-        )
-    
-    # Validar tamanho do arquivo (max 10MB)
-    max_size = 10 * 1024 * 1024  # 10MB
+    _validate_image(image)
+    tmp_path = None
     
     try:
-        # Salvar imagem temporariamente
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-            content = await image.read()
-            
-            if len(content) > max_size:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Arquivo muito grande. Tamanho máximo: 10MB"
-                )
-            
-            tmp.write(content)
-            tmp_path = tmp.name
-        
-        # Analisar com LLM
+        tmp_path, _ = await _save_temp_image(image)
         result = analyze_architecture(tmp_path)
         
-        # Remover arquivo temporário
-        os.unlink(tmp_path)
-        
-        # Verificar se houve erro na análise
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
                 status_code=500,
@@ -116,21 +127,15 @@ async def analyze(image: UploadFile = File(...)) -> Dict[str, Any]:
         }
     
     except HTTPException:
-        # Re-lançar exceções HTTP
         raise
     
     except Exception as e:
-        # Limpar arquivo temporário em caso de erro
-        if 'tmp_path' in locals():
-            try:
-                os.unlink(tmp_path)
-            except:
-                pass
-        
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao processar imagem: {str(e)}"
         )
+    finally:
+        _cleanup_files(tmp_path)
 
 
 @app.post("/analyze-pdf")
@@ -145,86 +150,42 @@ async def analyze_pdf(image: UploadFile = File(...)) -> FileResponse:
         Arquivo PDF com relatório completo de ameaças STRIDE
     """
     
-    # Validar tipo de arquivo
-    allowed_types = ["image/png", "image/jpeg", "image/jpg"]
-    if image.content_type not in allowed_types:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Tipo de arquivo não suportado. Use PNG, JPG ou JPEG. Recebido: {image.content_type}"
-        )
-    
-    # Validar tamanho do arquivo (max 10MB)
-    max_size = 10 * 1024 * 1024  # 10MB
-    
+    _validate_image(image)
     tmp_img_path = None
     tmp_pdf_path = None
     
     try:
-        # Salvar imagem temporariamente
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-            content = await image.read()
-            
-            if len(content) > max_size:
-                raise HTTPException(
-                    status_code=400,
-                    detail="Arquivo muito grande. Tamanho máximo: 10MB"
-                )
-            
-            tmp_img.write(content)
-            tmp_img_path = tmp_img.name
-        
-        # Analisar com LLM
+        tmp_img_path, _ = await _save_temp_image(image)
         result = analyze_architecture(tmp_img_path)
         
-        # Verificar se houve erro na análise
         if isinstance(result, dict) and "error" in result:
             raise HTTPException(
                 status_code=500,
                 detail=f"Erro na análise: {result['error']}"
             )
         
-        # Gerar PDF
         tmp_pdf_path = tempfile.mktemp(suffix=".pdf")
-        generate_stride_pdf_report(
-            result,
-            tmp_pdf_path,
-            tmp_img_path
-        )
-        
-        # Remover arquivo de imagem temporário
-        os.unlink(tmp_img_path)
+        generate_stride_pdf_report(result, tmp_pdf_path, tmp_img_path)
+        _cleanup_files(tmp_img_path)
         tmp_img_path = None
         
-        # Retornar PDF
         return FileResponse(
             path=tmp_pdf_path,
             media_type="application/pdf",
             filename=f"stride_report_{image.filename.split('.')[0]}.pdf",
-            background=None  # Não deletar automaticamente, faremos isso depois
+            background=None
         )
     
     except HTTPException:
-        # Re-lançar exceções HTTP
         raise
     
     except Exception as e:
-        # Limpar arquivos temporários em caso de erro
-        if tmp_img_path and os.path.exists(tmp_img_path):
-            try:
-                os.unlink(tmp_img_path)
-            except:
-                pass
-        
-        if tmp_pdf_path and os.path.exists(tmp_pdf_path):
-            try:
-                os.unlink(tmp_pdf_path)
-            except:
-                pass
-        
         raise HTTPException(
             status_code=500,
             detail=f"Erro ao gerar PDF: {str(e)}"
         )
+    finally:
+        _cleanup_files(tmp_img_path, tmp_pdf_path)
 
 
 @app.get("/stride-info")
@@ -232,8 +193,6 @@ async def stride_info():
     """
     Retorna informações sobre a metodologia STRIDE
     """
-    from stride_knowledge import STRIDE, STRIDE_DETAILS
-    
     return {
         "methodology": "STRIDE",
         "description": "Metodologia de modelagem de ameaças desenvolvida pela Microsoft",

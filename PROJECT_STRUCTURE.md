@@ -15,16 +15,14 @@ STRIDE-Threat-Analyzer/
 ├── 🐍 Código Fonte Principal
 │   ├── main.py                          # API FastAPI
 │   ├── app.py                           # Interface Web Streamlit
-│   ├── analyzer.py                      # Analisador com GPT-4 Vision
+│   ├── analyzer.py                      # Analisador com GPT-4o Vision
 │   ├── pdf_generator.py                 # Gerador de relatórios PDF
 │   ├── stride_knowledge.py              # Base de conhecimento STRIDE
 │   └── test_analyzer.py                 # Script de testes
 │
-├── 📚 docs/                             # Documentação completa
+├── 📚 docs/                             # Documentação
 │   ├── README.md                        # Índice da documentação
 │   ├── QUICKSTART.md                    # Guia de início rápido
-│   ├── PLANO_IMPLEMENTACAO_SIMPLIFICADO.md
-│   ├── AVALIACAO_PROJETO.md            # Relatório de testes
 │   ├── IADT - Fase 5 - Hackaton.pdf   # Documento do hackathon
 │   └── reports/                        # Relatórios de exemplo
 │       ├── README.md                   # Info sobre relatórios
@@ -57,7 +55,7 @@ STRIDE-Threat-Analyzer/
 |---------|------------------|
 | `main.py` | API REST com FastAPI - endpoints de análise |
 | `app.py` | Interface web com Streamlit - UI do usuário |
-| `analyzer.py` | Módulo de análise com GPT-4 Vision |
+| `analyzer.py` | Módulo de análise com GPT-4o Vision |
 | `pdf_generator.py` | Geração de relatórios PDF profissionais |
 | `stride_knowledge.py` | Base de conhecimento da metodologia STRIDE |
 | `test_analyzer.py` | Scripts de teste e demonstração |
@@ -66,10 +64,8 @@ STRIDE-Threat-Analyzer/
 
 | Arquivo | Conteúdo |
 |---------|----------|
-| `README.md` | Índice completo da documentação |
+| `README.md` | Índice da documentação |
 | `QUICKSTART.md` | Tutorial rápido de uso |
-| `PLANO_IMPLEMENTACAO_SIMPLIFICADO.md` | Arquitetura e planejamento |
-| `AVALIACAO_PROJETO.md` | Resultados de testes e validações |
 | `IADT - Fase 5 - Hackaton.pdf` | Documento oficial do hackathon |
 
 ### Relatórios de Exemplo (`docs/reports/`)
@@ -109,7 +105,7 @@ Diretório para armazenar diagramas de arquitetura de teste:
          ▼
 ┌─────────────────┐
 │  analyzer.py    │  ◄── Análise com IA
-│  (GPT-4 Vision) │
+│  (GPT-4o Vision) │
 └────────┬────────┘
          │
          ▼
@@ -147,7 +143,7 @@ Diretório para armazenar diagramas de arquitetura de teste:
 - ✅ Gestão de estado da sessão
 
 ### `analyzer.py` - Motor de Análise
-- ✅ Integração com OpenAI GPT-4 Vision
+- ✅ Integração com OpenAI GPT-4o Vision
 - ✅ Processamento de imagens
 - ✅ Aplicação da metodologia STRIDE
 - ✅ Estruturação de resultados
@@ -178,7 +174,7 @@ Diretório para armazenar diagramas de arquitetura de teste:
 
 Definidas em `requirements.txt`:
 
-- **openai** - Integração com GPT-4 Vision
+- **openai** - Integração com GPT-4o Vision
 - **fastapi** - Framework web para API
 - **uvicorn** - Servidor ASGI
 - **streamlit** - Interface web interativa
@@ -227,36 +223,11 @@ __pycache__/         ← Ignorado (cache Python)
 
 Para informações mais detalhadas, consulte:
 
-- [README Principal](../README.md) - Overview do projeto
+- [README Principal](README.md) - Overview do projeto
 - [Quick Start](docs/QUICKSTART.md) - Como começar
 - [Índice de Documentação](docs/README.md) - Toda documentação
-- [Relatórios de Exemplo](docs/reports/README.md) - Exemplos de output
-
-## 🎯 Próximas Expansões
-
-Para expandir o projeto, considere adicionar:
-
-```
-├── tests/                    # Testes automatizados
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-│
-├── scripts/                  # Scripts auxiliares
-│   ├── deploy.sh
-│   └── backup.sh
-│
-├── data/                     # Dados persistentes
-│   ├── cache/
-│   └── history/
-│
-└── docker/                   # Containerização
-    ├── Dockerfile
-    └── docker-compose.yml
-```
 
 ---
 
-**Última atualização**: Fevereiro 2026  
-**Versão do projeto**: MVP Fase 5 Completa  
-**Status**: ✅ Produção
+**Última atualização**: Março 2026  
+**Versão do projeto**: MVP Fase 5 Completa

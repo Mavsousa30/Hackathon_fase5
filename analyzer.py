@@ -1,5 +1,5 @@
 """
-Analisador de Arquitetura com GPT-5-mini Vision
+Analisador de Arquitetura com GPT-4o Vision
 Aplica a metodologia STRIDE em diagramas de arquitetura
 """
 
@@ -11,6 +11,7 @@ import json
 from openai import APITimeoutError, APIError
 import logging
 from datetime import datetime
+from stride_knowledge import STRIDE_DETAILS, COUNTERMEASURES
 
 # Carregar variáveis de ambiente
 load_dotenv()
@@ -36,7 +37,7 @@ client = OpenAI(
 
 def analyze_architecture(image_path: str) -> dict:
     """
-    Analisa um diagrama de arquitetura usando GPT-5-mini Vision e aplica STRIDE
+    Analisa um diagrama de arquitetura usando GPT-4o Vision e aplica STRIDE
     
     Args:
         image_path: Caminho para o arquivo de imagem da arquitetura
@@ -63,9 +64,6 @@ def analyze_architecture(image_path: str) -> dict:
     except Exception as e:
         logger.error(f"❌ Erro ao ler arquivo: {str(e)}")
         return {"error": f"Erro ao ler arquivo: {str(e)}"}
-    
-    # Importar conhecimento STRIDE (versão simplificada para o prompt)
-    from stride_knowledge import STRIDE_DETAILS, COUNTERMEASURES
     
     # Prompt aprimorado para análise STRIDE exaustiva
     prompt = f"""

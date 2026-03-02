@@ -6,11 +6,43 @@ Aplicação Streamlit para análise de ameaças em diagramas de arquitetura
 import streamlit as st
 import requests
 from PIL import Image
-import io
 import json
 import tempfile
 import os
 from pdf_generator import generate_stride_pdf_report
+
+# Constantes
+DEFAULT_API_URL = "http://localhost:8000"
+SESSION_DEFAULTS = {
+    'analysis_result': None,
+    'analysis_data': None,
+    'pdf_data': None,
+    'image_bytes': None,
+    'file_name': None,
+}
+
+
+def _init_session_state() -> None:
+    """Inicializa variáveis de sessão com valores padrão."""
+    for key, default in SESSION_DEFAULTS.items():
+        if key not in st.session_state:
+            st.session_state[key] = default
+
+
+def _reset_session_state() -> None:
+    """Limpa todas as variáveis de sessão para nova análise."""
+    for key, default in SESSION_DEFAULTS.items():
+        st.session_state[key] = default
+
+
+def _extract_analysis_data(result: dict) -> dict:
+    """Extrai dados de análise de resultado potencialmente aninhado."""
+    if 'analysis' not in result:
+        return result
+    analysis = result['analysis']
+    if isinstance(analysis, dict) and 'analysis' in analysis:
+        return analysis['analysis']
+    return analysis
 
 # Configuração da página
 st.set_page_config(
@@ -20,18 +52,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inicializar variáveis de sessão
-if 'analysis_result' not in st.session_state:
-    st.session_state['analysis_result'] = None
-if 'pdf_data' not in st.session_state:
-    st.session_state['pdf_data'] = None
-if 'image_bytes' not in st.session_state:
-    st.session_state['image_bytes'] = None
-if 'file_name' not in st.session_state:
-    st.session_state['file_name'] = None
+# Inicializar sessão
+_init_session_state()
 
 # URL da API (pode ser configurada)
-API_URL = st.sidebar.text_input("URL da API", "http://localhost:8000")
+API_URL = st.sidebar.text_input("URL da API", DEFAULT_API_URL)
 
 # Título e descrição
 st.title("🔒 STRIDE Threat Analyzer")
@@ -65,7 +90,7 @@ with st.sidebar:
             st.json(health_data)
         else:
             st.error("❌ API não está respondendo")
-    except:
+    except requests.exceptions.RequestException:
         st.error("❌ Não foi possível conectar à API")
         st.info("Certifique-se de que a API está rodando:\n```bash\nuvicorn main:app --reload\n```")
     
@@ -89,7 +114,7 @@ with st.sidebar:
             if response.ok:
                 stride_data = response.json()
                 st.json(stride_data)
-        except:
+        except requests.exceptions.RequestException:
             st.error("Erro ao buscar informações STRIDE")
 
 # Área principal
@@ -146,17 +171,7 @@ with col2:
                             # Armazenar resultado na sessão
                             st.session_state['analysis_result'] = result
                             st.session_state['file_name'] = uploaded_file.name
-                            
-                            # Extrair analysis corretamente (pode estar aninhado)
-                            if 'analysis' in result:
-                                analysis_data = result['analysis']
-                                # Se analysis também tem 'analysis' dentro, pegar o conteúdo real
-                                if isinstance(analysis_data, dict) and 'analysis' in analysis_data:
-                                    st.session_state['analysis_data'] = analysis_data['analysis']
-                                else:
-                                    st.session_state['analysis_data'] = analysis_data
-                            else:
-                                st.session_state['analysis_data'] = result
+                            st.session_state['analysis_data'] = _extract_analysis_data(result)
                             
                             # Salvar conteúdo da imagem
                             uploaded_file.seek(0)
@@ -193,7 +208,7 @@ with col2:
                     try:
                         analysis_json = json.loads(analysis)
                         st.json(analysis_json)
-                    except:
+                    except json.JSONDecodeError:
                         st.markdown(analysis)
                 else:
                     st.json(analysis)
@@ -266,12 +281,7 @@ with col2:
             
             # Botão para nova análise
             if st.button("🔄 Nova Análise", type="primary", use_container_width=True):
-                # Limpar sessão
-                st.session_state['analysis_result'] = None
-                st.session_state['analysis_data'] = None
-                st.session_state['pdf_data'] = None
-                st.session_state['image_bytes'] = None
-                st.session_state['file_name'] = None
+                _reset_session_state()
                 st.rerun()
     else:
         st.info("👆 Faça upload de um diagrama para começar a análise")
@@ -281,7 +291,7 @@ st.divider()
 st.markdown("""
 <div style='text-align: center; color: #666; padding: 20px;'>
     <p>🎓 Projeto Hackathon FIAP - Fase 5</p>
-    <p>Desenvolvido com ❤️ usando Streamlit, FastAPI e OpenAI GPT-4 Vision</p>
+    <p>Desenvolvido com ❤️ usando Streamlit, FastAPI e OpenAI GPT-4o</p>
 </div>
 """, unsafe_allow_html=True)
 

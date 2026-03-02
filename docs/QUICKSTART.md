@@ -1,40 +1,13 @@
-# ⚡ Guia de Início Rápido - MVP Completo
+# ⚡ Guia de Início Rápido - STRIDE Threat Analyzer
 
-## 🎉 Status: Fases 1-5 Implementadas!
+## ✅ Funcionalidades Implementadas
 
-### ✅ O que foi implementado:
-
-#### **FASE 1: Setup do Projeto**
-- ✅ Estrutura de pastas criada
-- ✅ requirements.txt com todas as dependências
-- ✅ Arquivo .env.example para configuração da API
-- ✅ .gitignore configurado
-
-#### **FASE 2: Base de Conhecimento STRIDE**
-- ✅ stride_knowledge.py implementado
-- ✅ Definições completas da metodologia STRIDE
-- ✅ Mapeamento de ameaças por componente
-- ✅ Contramedidas catalogadas
-
-#### **FASE 3: Análise com LLM (GPT-4 Vision)**
-- ✅ analyzer.py com integração OpenAI
-- ✅ Análise automática de diagramas
-- ✅ Geração de relatórios estruturados em JSON
-- ✅ Tratamento de erros robusto
-
-#### **FASE 4: API REST com FastAPI**
-- ✅ main.py implementado
-- ✅ Endpoints para análise de diagramas
-- ✅ Validação de arquivos e segurança
-- ✅ Documentação automática (Swagger/OpenAPI)
-- ✅ CORS configurado
-
-#### **FASE 5: Interface Web com Streamlit**
-- ✅ app.py implementado
-- ✅ Upload e preview de imagens
-- ✅ Análise em tempo real
-- ✅ Download de relatórios
-- ✅ Interface intuitiva e responsiva
+- **FASE 1**: Setup do projeto e configuração de ambiente
+- **FASE 2**: Base de conhecimento STRIDE (`stride_knowledge.py`)
+- **FASE 3**: Análise com GPT-4o Vision (`analyzer.py`)
+- **FASE 4**: API REST com FastAPI (`main.py`)
+- **FASE 5**: Interface Web com Streamlit (`app.py`)
+- **FASE 6**: Geração de Relatórios PDF (`pdf_generator.py`)
 
 ---
 
@@ -176,86 +149,17 @@ python test_analyzer.py
 
 ```
 Hackathon/
-├── .env.example                          # Template de configuração
-├── .gitignore                            # Arquivos ignorados
-├── README.md                             # Documentação completa
-├── QUICKSTART.md                         # Guia rápido (este arquivo)
-├── PLANO_IMPLEMENTACAO_SIMPLIFICADO.md   # Plano detalhado
-├── main.py                               # ⭐ API REST FastAPI (FASE 4)
-├── app.py                                # ⭐ Interface Streamlit (FASE 5)
-├── analyzer.py                           # ⭐ Analisador principal (FASE 3)
-├── stride_knowledge.py                   # ⭐ Base STRIDE (FASE 2)
-├── test_analyzer.py                      # Testes
-├── requirements.txt                      # Dependências (FASE 1)
-└── examples/              # Pasta para imagens de teste
+├── main.py                  # API REST FastAPI
+├── app.py                   # Interface Web Streamlit
+├── analyzer.py              # Analisador com GPT-4o Vision
+├── pdf_generator.py         # Gerador de relatórios PDF
+├── stride_knowledge.py      # Base de conhecimento STRIDE
+├── test_analyzer.py         # Testes
+├── requirements.txt         # Dependências Python
+├── .env.example             # Template de configuração
+├── docs/                    # Documentação
+└── examples/                # Diagramas de exemplo
 ```
-
----
-
-## 🧪 Exemplo de Resultado
-
-Quando você analisa uma imagem, recebe algo como:
-
-```json
-{
-  "success": true,
-  "analysis": {
-    "componentes": [
-      {
-        "nome": "API Gateway",
-        "tipo": "api",
-        "ameacas": [
-          {
-            "categoria_stride": "S",
-            "descricao": "Falsificação de tokens JWT",
-            "criticidade": "Alta",
-            "contramedidas": [
-              "Implementar validação robusta de tokens",
-              "Usar certificados para assinatura"
-            ]
-          }
-        ]
-      }
-    ],
-    "resumo": {
-      "total_componentes": 5,
-      "total_ameacas": 15,
-      "ameacas_alta": 3
-    }
-  }
-}
-```
-
----
-
-## 🎯 Próximas Etapas (Fases 4 e 5)
-
-### FASE 4: API REST com FastAPI
-- [ ] Criar endpoint `/analyze` para upload de imagens
-- [ ] Endpoint `/health` para monitoramento
-- [ ] Documentação automática com Swagger
-
-### FASE 5: Interface Web com Streamlit
-- [ ] Interface para upload de imagens
-- [ ] Visualização de resultados
-- [ ] Export de relatórios
-
----
-
-## 💡 Dicas
-
-1. **Teste com imagens de exemplo**: Coloque suas imagens de arquitetura na pasta `examples/`
-
-2. **Formato recomendado**: PNG ou JPEG, resolução mínima 800x600
-
-3. **Consulte a base STRIDE**: Use o módulo `stride_knowledge.py`:
-   ```python
-   from stride_knowledge import get_stride_info
-   info = get_stride_info()
-   print(info["methodology"])
-   ```
-
-4. **Custos da API**: GPT-4 Vision tem custo por token. Monitore em: https://platform.openai.com/usage
 
 ---
 
@@ -273,15 +177,3 @@ pip install -r requirements.txt
 ### Erro: "Image file not found"
 - Use caminho absoluto ou relativo correto
 - Verifique se o arquivo existe: `ls examples/`
-
----
-
-## 📞 Suporte
-
-Em caso de dúvidas, consulte:
-- [README.md](README.md) - Documentação completa
-- [PLANO_IMPLEMENTACAO_SIMPLIFICADO.md](PLANO_IMPLEMENTACAO_SIMPLIFICADO.md) - Plano original
-
----
-
-**Status Atual**: ✅ Fase 3 Completa - Pronto para implementar API REST (Fase 4)

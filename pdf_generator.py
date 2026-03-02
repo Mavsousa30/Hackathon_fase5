@@ -14,6 +14,28 @@ from datetime import datetime
 import json
 import os
 
+# Constantes de cores reutilizáveis
+COLOR_PRIMARY = colors.HexColor('#0066cc')
+COLOR_DARK = colors.HexColor('#1a1a1a')
+COLOR_GRAY_TEXT = colors.HexColor('#333333')
+COLOR_DANGER = colors.HexColor('#cc0000')
+COLOR_WARNING = colors.HexColor('#ff9900')
+COLOR_SUCCESS = colors.HexColor('#009900')
+COLOR_GOLD = colors.HexColor('#FFD700')
+COLOR_ROW_ALT = colors.HexColor('#f0f0f0')
+
+SEVERIDADE_CORES = {
+    'Alta': (COLOR_DANGER, 'ALTA'),
+    'Média': (COLOR_WARNING, 'MÉDIA'),
+    'Baixa': (COLOR_SUCCESS, 'BAIXA'),
+}
+
+PRIORIDADE_CORES = {
+    'Alta': COLOR_DANGER,
+    'Média': COLOR_WARNING,
+    'Baixa': COLOR_SUCCESS,
+}
+
 
 class STRIDEReportGenerator:
     """Gerador de relatórios PDF para análises STRIDE"""
@@ -30,7 +52,7 @@ class STRIDEReportGenerator:
             name='CustomTitle',
             parent=self.styles['Heading1'],
             fontSize=24,
-            textColor=colors.HexColor('#1a1a1a'),
+            textColor=COLOR_DARK,
             spaceAfter=30,
             alignment=TA_CENTER,
             fontName='Helvetica-Bold'
@@ -41,7 +63,7 @@ class STRIDEReportGenerator:
             name='CustomSubtitle',
             parent=self.styles['Heading2'],
             fontSize=16,
-            textColor=colors.HexColor('#333333'),
+            textColor=COLOR_GRAY_TEXT,
             spaceAfter=12,
             spaceBefore=12,
             fontName='Helvetica-Bold'
@@ -52,7 +74,7 @@ class STRIDEReportGenerator:
             name='CustomSection',
             parent=self.styles['Heading3'],
             fontSize=14,
-            textColor=colors.HexColor('#0066cc'),
+            textColor=COLOR_PRIMARY,
             spaceAfter=10,
             spaceBefore=15,
             fontName='Helvetica-Bold'
@@ -63,7 +85,7 @@ class STRIDEReportGenerator:
             name='STRIDECategory',
             parent=self.styles['Heading4'],
             fontSize=12,
-            textColor=colors.HexColor('#cc0000'),
+            textColor=COLOR_DANGER,
             spaceAfter=8,
             spaceBefore=10,
             fontName='Helvetica-Bold'
@@ -83,7 +105,7 @@ class STRIDEReportGenerator:
             name='Highlight',
             parent=self.styles['BodyText'],
             fontSize=10,
-            textColor=colors.HexColor('#0066cc'),
+            textColor=COLOR_PRIMARY,
             fontName='Helvetica-Bold'
         ))
     
@@ -193,7 +215,7 @@ class STRIDEReportGenerator:
             ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 11),
             ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-            ('TEXTCOLOR', (0, 0), (0, -1), colors.HexColor('#0066cc')),
+            ('TEXTCOLOR', (0, 0), (0, -1), COLOR_PRIMARY),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('LINEBELOW', (0, 0), (-1, -1), 0.5, colors.grey),
@@ -206,10 +228,10 @@ class STRIDEReportGenerator:
         elements.append(Spacer(1, 1*inch))
         
         # Rodapé da capa
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         elements.append(Paragraph(
-            "<i>Projeto Hackathon FIAP - Fase 5<br/>Desenvolvido com IA e OpenAI GPT-4 Vision</i>",
+            "<i>Projeto Hackathon FIAP - Fase 5<br/>Desenvolvido com IA e OpenAI GPT-4o</i>",
             self.styles['Normal']
         ))
         
@@ -220,7 +242,7 @@ class STRIDEReportGenerator:
         elements = []
         
         elements.append(Paragraph("Sumário Executivo", self.styles['CustomTitle']))
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         
         # Extrair informações resumidas
@@ -258,7 +280,7 @@ class STRIDEReportGenerator:
             risk_color = colors.orange
         elif risk_score >= 4.0:
             risk_status = "MEDIO"
-            risk_color = colors.HexColor('#FFD700')
+            risk_color = COLOR_GOLD
         else:
             risk_status = "BAIXO"
             risk_color = colors.green
@@ -274,14 +296,14 @@ class STRIDEReportGenerator:
         
         metrics_table = Table(metrics_data, colWidths=[2.5*inch, 1.5*inch, 2*inch])
         metrics_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0066cc')),
+            ('BACKGROUND', (0, 0), (-1, 0), COLOR_PRIMARY),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 11),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, COLOR_ROW_ALT]),
             ('TOPPADDING', (0, 0), (-1, -1), 10),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
         ]))
@@ -344,7 +366,7 @@ class STRIDEReportGenerator:
         elements = []
         
         elements.append(Paragraph("Análise Detalhada de Ameaças", self.styles['CustomTitle']))
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         
         # Extrair dados aninhados se necessário
@@ -431,12 +453,7 @@ class STRIDEReportGenerator:
                         prioridade = rec.get('prioridade', 'Média')
                         
                         # Definir cor por prioridade
-                        if prioridade == 'Alta':
-                            cor_prioridade = '#cc0000'  # Vermelho
-                        elif prioridade == 'Média':
-                            cor_prioridade = '#ff9900'  # Laranja
-                        else:
-                            cor_prioridade = '#009900'  # Verde
+                        cor_prioridade = str(PRIORIDADE_CORES.get(prioridade, COLOR_SUCCESS))
                         
                         elements.append(Paragraph(
                             f"<font face='ZapfDingbats'>4</font> <b>[{categoria}]</b> {recomendacao} <font color='{cor_prioridade}'><b>[{prioridade.upper()}]</b></font>",
@@ -514,15 +531,8 @@ class STRIDEReportGenerator:
                 impacto = ameaca.get('impacto', '')
                 
                 # Definir cor por severidade
-                if severidade == 'Alta':
-                    cor_severidade = '#cc0000'  # Vermelho
-                    tag_sev = 'ALTA'
-                elif severidade == 'Média':
-                    cor_severidade = '#ff9900'  # Laranja
-                    tag_sev = 'MÉDIA'
-                else:
-                    cor_severidade = '#009900'  # Verde
-                    tag_sev = 'BAIXA'
+                cor_hex, tag_sev = SEVERIDADE_CORES.get(severidade, ('#009900', 'BAIXA'))
+                cor_severidade = str(cor_hex)
                 
                 # Construir texto da ameaça
                 if nome_ameaca:
@@ -552,12 +562,7 @@ class STRIDEReportGenerator:
                     ameaca_rel = contramedida.get('ameaca_relacionada', '')
                     
                     # Definir cor por prioridade
-                    if prioridade == 'Alta':
-                        cor_prioridade = '#cc0000'  # Vermelho
-                    elif prioridade == 'Média':
-                        cor_prioridade = '#ff9900'  # Laranja
-                    else:
-                        cor_prioridade = '#009900'  # Verde
+                    cor_prioridade = str(PRIORIDADE_CORES.get(prioridade, COLOR_SUCCESS))
                     
                     # Formatar com prioridade
                     if ameaca_rel:
@@ -617,7 +622,7 @@ class STRIDEReportGenerator:
         elements = []
         
         elements.append(Paragraph("Matriz STRIDE - Visão Panorâmica", self.styles['CustomTitle']))
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         
         elements.append(Paragraph(
@@ -655,7 +660,7 @@ class STRIDEReportGenerator:
         matriz_table = Table(matriz_data, colWidths=col_widths)
         matriz_table.setStyle(TableStyle([
             # Header
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0066cc')),
+            ('BACKGROUND', (0, 0), (-1, 0), COLOR_PRIMARY),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, 0), 10),
@@ -665,12 +670,12 @@ class STRIDEReportGenerator:
             # Grid
             ('GRID', (0, 0), (-1, -1), 1, colors.grey),
             # Rows alternadas
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, COLOR_ROW_ALT]),
             # Padding
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
             # Cor dos checks
-            ('TEXTCOLOR', (1, 1), (-1, -1), colors.HexColor('#cc0000')),
+            ('TEXTCOLOR', (1, 1), (-1, -1), COLOR_DANGER),
             ('FONTNAME', (1, 1), (-1, -1), 'Helvetica-Bold'),
             ('FONTSIZE', (1, 1), (-1, -1), 12),
         ]))
@@ -697,7 +702,7 @@ class STRIDEReportGenerator:
         elements = []
         
         elements.append(Paragraph("Trust Boundaries - Fronteiras de Confiança", self.styles['CustomTitle']))
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         
         intro_text = """
@@ -779,7 +784,7 @@ class STRIDEReportGenerator:
         from stride_knowledge import STRIDE, STRIDE_DETAILS
         
         elements.append(Paragraph("Sobre a Metodologia STRIDE", self.styles['CustomTitle']))
-        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(HRFlowable(width="100%", thickness=2, color=COLOR_PRIMARY))
         elements.append(Spacer(1, 0.2*inch))
         
         intro_text = """
@@ -808,14 +813,14 @@ class STRIDEReportGenerator:
         
         stride_table = Table(stride_data, colWidths=[2*inch, 2.5*inch, 1.5*inch])
         stride_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0066cc')),
+            ('BACKGROUND', (0, 0), (-1, 0), COLOR_PRIMARY),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
             ('FONTSIZE', (0, 0), (-1, -1), 9),
             ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('GRID', (0, 0), (-1, -1), 1, colors.grey),
-            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, COLOR_ROW_ALT]),
             ('TOPPADDING', (0, 0), (-1, -1), 8),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
         ]))
