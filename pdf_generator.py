@@ -134,6 +134,20 @@ class STRIDEReportGenerator:
         # Adicionar análise detalhada
         story.extend(self._create_detailed_analysis(analysis_data))
         
+        # Adicionar Matriz STRIDE se disponível
+        if isinstance(analysis_data, dict):
+            actual_data = analysis_data.get('analysis', analysis_data)
+            if 'matriz_stride' in actual_data and actual_data['matriz_stride']:
+                story.append(PageBreak())
+                story.extend(self._create_stride_matrix(actual_data))
+        
+        # Adicionar Trust Boundaries se disponível
+        if isinstance(analysis_data, dict):
+            actual_data = analysis_data.get('analysis', analysis_data)
+            if 'trust_boundaries' in actual_data and actual_data['trust_boundaries']:
+                story.append(PageBreak())
+                story.extend(self._create_trust_boundaries_section(actual_data))
+        
         # Adicionar metodologia STRIDE
         story.append(PageBreak())
         story.extend(self._create_stride_methodology())
@@ -152,7 +166,7 @@ class STRIDEReportGenerator:
         
         # Título
         elements.append(Paragraph(
-            "🔒 Relatório de Modelagem de Ameaças",
+            "Relatório de Modelagem de Ameaças",
             self.styles['CustomTitle']
         ))
         
@@ -213,6 +227,8 @@ class STRIDEReportGenerator:
         total_componentes = 0
         total_ameacas = 0
         ameacas_criticas = 0
+        risk_score = 0.0
+        risk_justificativa = "Não calculado"
         
         if isinstance(data, dict):
             # Tentar extrair do resumo se existir
@@ -221,19 +237,39 @@ class STRIDEReportGenerator:
                 total_componentes = resumo.get('total_componentes', 0)
                 total_ameacas = resumo.get('total_ameacas', 0)
                 ameacas_criticas = resumo.get('ameacas_alta', 0)
+                risk_score = resumo.get('risk_score', 0.0)
+                risk_justificativa = resumo.get('risk_justificativa', 'Não calculado')
             # Ou contar dos componentes
             elif 'componentes' in data:
                 total_componentes = len(data['componentes'])
                 for comp in data['componentes']:
                     if 'ameacas' in comp:
                         total_ameacas += len(comp['ameacas'])
+                        for ameaca in comp['ameacas']:
+                            if ameaca.get('severidade') == 'Alta':
+                                ameacas_criticas += 1
         
-        # Tabela de métricas
+        # Determinar status do risk score
+        if risk_score >= 8.0:
+            risk_status = "CRITICO"
+            risk_color = colors.red
+        elif risk_score >= 6.0:
+            risk_status = "ALTO"
+            risk_color = colors.orange
+        elif risk_score >= 4.0:
+            risk_status = "MEDIO"
+            risk_color = colors.HexColor('#FFD700')
+        else:
+            risk_status = "BAIXO"
+            risk_color = colors.green
+        
+        # Tabela de métricas com Risk Score
         metrics_data = [
-            ['📊 Métrica', '📈 Valor', '🎯 Status'],
+            ['Metrica', 'Valor', 'Status'],
             ['Componentes Analisados', str(total_componentes), 'Completo'],
-            ['Ameaças Identificadas', str(total_ameacas), 'Alta Prioridade' if total_ameacas > 10 else 'Atenção'],
-            ['Ameaças Críticas', str(ameacas_criticas), 'Crítico' if ameacas_criticas > 0 else 'OK']
+            ['Ameacas Identificadas', str(total_ameacas), 'Alta Prioridade' if total_ameacas > 10 else 'Atencao'],
+            ['Ameacas Criticas', str(ameacas_criticas), 'Critico' if ameacas_criticas > 0 else 'OK'],
+            ['Risk Score Geral', f'{risk_score:.1f}/10', risk_status]
         ]
         
         metrics_table = Table(metrics_data, colWidths=[2.5*inch, 1.5*inch, 2*inch])
@@ -252,6 +288,18 @@ class STRIDEReportGenerator:
         
         elements.append(metrics_table)
         elements.append(Spacer(1, 0.3*inch))
+        
+        # Adicionar justificativa do Risk Score se disponível
+        if risk_justificativa and risk_justificativa != "Não calculado":
+            elements.append(Paragraph(
+                "<b>Justificativa do Risk Score:</b>",
+                self.styles['CustomSection']
+            ))
+            elements.append(Paragraph(
+                risk_justificativa,
+                self.styles['CustomBody']
+            ))
+            elements.append(Spacer(1, 0.2*inch))
         
         # Descrição do sumário
         elements.append(Paragraph(
@@ -326,14 +374,46 @@ class STRIDEReportGenerator:
                         f"<b>{idx}. {fluxo.get('origem', 'N/A')} → {fluxo.get('destino', 'N/A')}</b>",
                         self.styles['CustomBody']
                     ))
-                    if 'ameacas' in fluxo:
+                    
+                    # Informações do fluxo
+                    info_parts = []
+                    if 'protocolo' in fluxo:
+                        info_parts.append(f"Protocolo: <b>{fluxo['protocolo']}</b>")
+                    if 'tipo_dados' in fluxo:
+                        info_parts.append(f"Dados: {fluxo['tipo_dados']}")
+                    if 'criptografado' in fluxo:
+                        if fluxo['criptografado']:
+                            cripto = '<font color="#009900"><b>[CRIPTOGRAFADO]</b></font>'
+                        else:
+                            cripto = '<font color="#cc0000"><b>[NÃO CRIPTOGRAFADO]</b></font>'
+                        info_parts.append(cripto)
+                    if 'autenticado' in fluxo:
+                        if fluxo['autenticado']:
+                            auth = '<font color="#009900">[AUTENTICADO]</font>'
+                        else:
+                            auth = '<font color="#cc0000">[NÃO AUTENTICADO]</font>'
+                        info_parts.append(auth)
+                    if 'atravessa_trust_boundary' in fluxo and fluxo['atravessa_trust_boundary']:
+                        info_parts.append('<font color="#ff9900"><b>[ATRAVESSA TRUST BOUNDARY]</b></font>')
+                    
+                    if info_parts:
+                        elements.append(Paragraph(
+                            f"<i>{' | '.join(info_parts)}</i>",
+                            self.styles['CustomBody']
+                        ))
+                    
+                    # Ameaças
+                    if 'ameacas' in fluxo and fluxo['ameacas']:
                         elements.append(Paragraph("Ameaças:", self.styles['Highlight']))
                         for ameaca in fluxo['ameacas']:
-                            elements.append(Paragraph(f"• {ameaca}", self.styles['CustomBody']))
-                    if 'contramedidas' in fluxo:
+                            elements.append(Paragraph(f"<font color='#cc0000'><b>!</b></font> {ameaca}", self.styles['CustomBody']))
+                    
+                    # Contramedidas
+                    if 'contramedidas' in fluxo and fluxo['contramedidas']:
                         elements.append(Paragraph("Contramedidas:", self.styles['Highlight']))
                         for contra in fluxo['contramedidas']:
-                            elements.append(Paragraph(f"✓ {contra}", self.styles['CustomBody']))
+                            elements.append(Paragraph(f"<font face='ZapfDingbats'>4</font> {contra}", self.styles['CustomBody']))
+                    
                     elements.append(Spacer(1, 0.15*inch))
             
             # Adicionar recomendações gerais
@@ -342,8 +422,29 @@ class STRIDEReportGenerator:
                 elements.append(Paragraph("Recomendações Gerais de Segurança", self.styles['CustomSection']))
                 elements.append(HRFlowable(width="100%", thickness=1, color=colors.lightgrey))
                 elements.append(Spacer(1, 0.1*inch))
+                
                 for rec in actual_data['recomendacoes_gerais']:
-                    elements.append(Paragraph(f"✓ {rec}", self.styles['CustomBody']))
+                    # Verificar se é dicionário (novo formato) ou string (formato antigo)
+                    if isinstance(rec, dict):
+                        categoria = rec.get('categoria', 'Geral')
+                        recomendacao = rec.get('recomendacao', 'N/A')
+                        prioridade = rec.get('prioridade', 'Média')
+                        
+                        # Definir cor por prioridade
+                        if prioridade == 'Alta':
+                            cor_prioridade = '#cc0000'  # Vermelho
+                        elif prioridade == 'Média':
+                            cor_prioridade = '#ff9900'  # Laranja
+                        else:
+                            cor_prioridade = '#009900'  # Verde
+                        
+                        elements.append(Paragraph(
+                            f"<font face='ZapfDingbats'>4</font> <b>[{categoria}]</b> {recomendacao} <font color='{cor_prioridade}'><b>[{prioridade.upper()}]</b></font>",
+                            self.styles['CustomBody']
+                        ))
+                    else:
+                        # Formato antigo (string simples)
+                        elements.append(Paragraph(f"<font face='ZapfDingbats'>4</font> {rec}", self.styles['CustomBody']))
         
         # Se tiver texto de análise (string)
         elif isinstance(actual_data, dict) and 'analysis_text' in actual_data:
@@ -409,11 +510,33 @@ class STRIDEReportGenerator:
                 categoria = ameaca.get('categoria', 'N/A')
                 descricao = ameaca.get('descricao', 'N/A')
                 severidade = ameaca.get('severidade', 'Média')
+                nome_ameaca = ameaca.get('nome_ameaca', '')
+                impacto = ameaca.get('impacto', '')
                 
-                elements.append(Paragraph(
-                    f"• <b>[{categoria}]</b> - {severidade}: {descricao}",
-                    self.styles['CustomBody']
-                ))
+                # Definir cor por severidade
+                if severidade == 'Alta':
+                    cor_severidade = '#cc0000'  # Vermelho
+                    tag_sev = 'ALTA'
+                elif severidade == 'Média':
+                    cor_severidade = '#ff9900'  # Laranja
+                    tag_sev = 'MÉDIA'
+                else:
+                    cor_severidade = '#009900'  # Verde
+                    tag_sev = 'BAIXA'
+                
+                # Construir texto da ameaça
+                if nome_ameaca:
+                    texto = f"• <b>[{categoria}] {nome_ameaca}</b> <font color='{cor_severidade}'>[{tag_sev}]</font><br/>"
+                else:
+                    texto = f"• <b>[{categoria}]</b> <font color='{cor_severidade}'>[{tag_sev}]</font><br/>"
+                
+                texto += f"  {descricao}"
+                
+                if impacto:
+                    texto += f"<br/>  <b>Impacto:</b> {impacto}"
+                
+                elements.append(Paragraph(texto, self.styles['CustomBody']))
+                elements.append(Spacer(1, 0.05*inch))
         
         # Contramedidas
         if 'contramedidas' in component:
@@ -421,10 +544,38 @@ class STRIDEReportGenerator:
             elements.append(Paragraph("<b>Contramedidas Recomendadas:</b>", self.styles['Highlight']))
             
             for contramedida in component['contramedidas']:
-                elements.append(Paragraph(
-                    f"✓ {contramedida}",
-                    self.styles['CustomBody']
-                ))
+                # Verificar se é dicionário (novo formato) ou string (formato antigo)
+                if isinstance(contramedida, dict):
+                    # Novo formato estruturado
+                    texto_contramedida = contramedida.get('contramedida', 'N/A')
+                    prioridade = contramedida.get('prioridade', 'Média')
+                    ameaca_rel = contramedida.get('ameaca_relacionada', '')
+                    
+                    # Definir cor por prioridade
+                    if prioridade == 'Alta':
+                        cor_prioridade = '#cc0000'  # Vermelho
+                    elif prioridade == 'Média':
+                        cor_prioridade = '#ff9900'  # Laranja
+                    else:
+                        cor_prioridade = '#009900'  # Verde
+                    
+                    # Formatar com prioridade
+                    if ameaca_rel:
+                        elements.append(Paragraph(
+                            f"<font face='ZapfDingbats'>4</font> <b>[{ameaca_rel}]</b> {texto_contramedida} <font color='{cor_prioridade}'><b>[{prioridade.upper()}]</b></font>",
+                            self.styles['CustomBody']
+                        ))
+                    else:
+                        elements.append(Paragraph(
+                            f"<font face='ZapfDingbats'>4</font> {texto_contramedida} <font color='{cor_prioridade}'><b>[{prioridade.upper()}]</b></font>",
+                            self.styles['CustomBody']
+                        ))
+                else:
+                    # Formato antigo (string simples)
+                    elements.append(Paragraph(
+                        f"<font face='ZapfDingbats'>4</font> {contramedida}",
+                        self.styles['CustomBody']
+                    ))
         
         elements.append(Spacer(1, 0.2*inch))
         elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
@@ -458,6 +609,166 @@ class STRIDEReportGenerator:
                     elements.append(Paragraph(str(value), self.styles['CustomBody']))
                 
                 elements.append(Spacer(1, 0.2*inch))
+        
+        return elements
+    
+    def _create_stride_matrix(self, data: dict):
+        """Cria a matriz STRIDE visual mostrando quais categorias se aplicam a cada componente"""
+        elements = []
+        
+        elements.append(Paragraph("Matriz STRIDE - Visão Panorâmica", self.styles['CustomTitle']))
+        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        elements.append(Paragraph(
+            """Esta matriz apresenta uma visão panorâmica de quais categorias STRIDE se aplicam a cada 
+            componente da arquitetura. Uma célula marcada (X) indica que aquela categoria de ameaça 
+            foi identificada para o componente.""",
+            self.styles['CustomBody']
+        ))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        matriz = data.get('matriz_stride', {})
+        
+        if not matriz:
+            elements.append(Paragraph(
+                "<i>Matriz STRIDE não disponível nesta análise.</i>",
+                self.styles['Normal']
+            ))
+            return elements
+        
+        # Construir tabela da matriz
+        # Headers: Componente, S, T, R, I, D, E
+        matriz_data = [['Componente', 'S', 'T', 'R', 'I', 'D', 'E']]
+        
+        for componente, categorias in matriz.items():
+            row = [componente[:30]]  # Limitar nome do componente
+            for cat in ['S', 'T', 'R', 'I', 'D', 'E']:
+                if categorias.get(cat, False):
+                    row.append('X')
+                else:
+                    row.append('')
+            matriz_data.append(row)
+        
+        # Criar tabela
+        col_widths = [2.5*inch] + [0.5*inch] * 6
+        matriz_table = Table(matriz_data, colWidths=col_widths)
+        matriz_table.setStyle(TableStyle([
+            # Header
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#0066cc')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+            ('ALIGN', (1, 0), (-1, -1), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            # Grid
+            ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+            # Rows alternadas
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f0f0f0')]),
+            # Padding
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            # Cor dos checks
+            ('TEXTCOLOR', (1, 1), (-1, -1), colors.HexColor('#cc0000')),
+            ('FONTNAME', (1, 1), (-1, -1), 'Helvetica-Bold'),
+            ('FONTSIZE', (1, 1), (-1, -1), 12),
+        ]))
+        
+        elements.append(matriz_table)
+        elements.append(Spacer(1, 0.2*inch))
+        
+        # Legenda
+        legenda_text = """
+        <b>Legenda:</b><br/>
+        <b>S</b> - Spoofing (Falsificação) | 
+        <b>T</b> - Tampering (Adulteração) | 
+        <b>R</b> - Repudiation (Repúdio) | 
+        <b>I</b> - Information Disclosure (Vazamento) | 
+        <b>D</b> - Denial of Service (Negação de Serviço) | 
+        <b>E</b> - Elevation of Privilege (Elevação de Privilégio)
+        """
+        elements.append(Paragraph(legenda_text, self.styles['CustomBody']))
+        
+        return elements
+    
+    def _create_trust_boundaries_section(self, data: dict):
+        """Cria a seção de Trust Boundaries (Fronteiras de Confiança)"""
+        elements = []
+        
+        elements.append(Paragraph("Trust Boundaries - Fronteiras de Confiança", self.styles['CustomTitle']))
+        elements.append(HRFlowable(width="100%", thickness=2, color=colors.HexColor('#0066cc')))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        intro_text = """
+        Trust Boundaries (Fronteiras de Confiança) são pontos críticos onde o nível de confiança muda 
+        na arquitetura. A identificação e análise dessas fronteiras é fundamental na metodologia STRIDE, 
+        pois são locais onde ataques frequentemente ocorrem. Qualquer dado que atravessa uma trust boundary 
+        deve ser validado, autenticado e autorizado apropriadamente.
+        """
+        elements.append(Paragraph(intro_text, self.styles['CustomBody']))
+        elements.append(Spacer(1, 0.2*inch))
+        
+        trust_boundaries = data.get('trust_boundaries', [])
+        
+        if not trust_boundaries:
+            elements.append(Paragraph(
+                "<i>Nenhuma trust boundary identificada ou informação não disponível.</i>",
+                self.styles['Normal']
+            ))
+            return elements
+        
+        # Para cada trust boundary
+        for idx, boundary in enumerate(trust_boundaries, 1):
+            elements.append(Paragraph(
+                f"{idx}. {boundary.get('nome', 'Trust Boundary')}",
+                self.styles['CustomSection']
+            ))
+            
+            # Descrição
+            if 'descricao' in boundary:
+                elements.append(Paragraph(
+                    f"<b>Descrição:</b> {boundary['descricao']}",
+                    self.styles['CustomBody']
+                ))
+            
+            # Origem e Destino
+            if 'componente_origem' in boundary and 'componente_destino' in boundary:
+                elements.append(Paragraph(
+                    f"<b>Travessia:</b> {boundary['componente_origem']} → {boundary['componente_destino']}",
+                    self.styles['CustomBody']
+                ))
+            
+            # Controles existentes
+            if 'controles_existentes' in boundary and boundary['controles_existentes']:
+                elements.append(Paragraph(
+                    "<b>Controles de Segurança Existentes:</b>",
+                    self.styles['Highlight']
+                ))
+                for controle in boundary['controles_existentes']:
+                    elements.append(Paragraph(f"<font face='ZapfDingbats'>4</font> {controle}", self.styles['CustomBody']))
+            
+            # Ameaças
+            if 'ameacas' in boundary and boundary['ameacas']:
+                elements.append(Paragraph(
+                    "<b>Ameaças Potenciais:</b>",
+                    self.styles['Highlight']
+                ))
+                for ameaca in boundary['ameacas']:
+                    elements.append(Paragraph(f"<font color='#cc0000'><b>!</b></font> {ameaca}", self.styles['CustomBody']))
+            
+            # Contramedidas recomendadas
+            if 'contramedidas_recomendadas' in boundary and boundary['contramedidas_recomendadas']:
+                elements.append(Paragraph(
+                    "<b>Contramedidas Recomendadas:</b>",
+                    self.styles['Highlight']
+                ))
+                for contramedida in boundary['contramedidas_recomendadas']:
+                    elements.append(Paragraph(f"<font face='ZapfDingbats'>4</font> {contramedida}", self.styles['CustomBody']))
+            
+            elements.append(Spacer(1, 0.2*inch))
+            elements.append(HRFlowable(width="100%", thickness=0.5, color=colors.lightgrey))
+            elements.append(Spacer(1, 0.2*inch))
         
         return elements
     
@@ -515,7 +826,7 @@ class STRIDEReportGenerator:
         # Nota final
         footer_text = """
         <b>Nota:</b> Este relatório foi gerado automaticamente usando Inteligência Artificial 
-        (GPT-4o-mini) para análise de diagramas de arquitetura. As ameaças e recomendações 
+        (GPT-4o com Vision) para análise de diagramas de arquitetura. As ameaças e recomendações 
         identificadas devem ser revisadas por especialistas em segurança para validação e 
         adaptação ao contexto específico do projeto.
         """

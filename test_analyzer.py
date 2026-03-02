@@ -65,9 +65,13 @@ def test_analyzer():
             print("\n📈 Resumo da Análise:")
             print(f"   • Total de Componentes: {resumo.get('total_componentes', 'N/A')}")
             print(f"   • Total de Ameaças: {resumo.get('total_ameacas', 'N/A')}")
+            print(f"   • Total de Trust Boundaries: {resumo.get('total_trust_boundaries', 'N/A')}")
             print(f"   • Ameaças Alta Criticidade: {resumo.get('ameacas_alta', 'N/A')}")
             print(f"   • Ameaças Média Criticidade: {resumo.get('ameacas_media', 'N/A')}")
             print(f"   • Ameaças Baixa Criticidade: {resumo.get('ameacas_baixa', 'N/A')}")
+            print(f"   • Risk Score: {resumo.get('risk_score', 'N/A')}/10")
+            if 'risk_justificativa' in resumo:
+                print(f"   • Justificativa: {resumo.get('risk_justificativa', 'N/A')}")
     else:
         print(f"\n❌ Erro na análise: {result.get('error')}")
     

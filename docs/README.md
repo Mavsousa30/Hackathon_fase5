@@ -4,6 +4,15 @@ Este diretório contém toda a documentação do projeto STRIDE Threat Analyzer.
 
 ## 📋 Índice de Documentos
 
+### 🚀 Melhorias Implementadas (Novo!)
+- **[RESUMO_MELHORIAS.md](RESUMO_MELHORIAS.md)** - ⭐ Resumo executivo das 7 melhorias implementadas
+- **[MELHORIAS_IMPLEMENTADAS.md](MELHORIAS_IMPLEMENTADAS.md)** - Documentação técnica completa das melhorias
+- **[GUIA_TESTES.md](GUIA_TESTES.md)** - Guia para validação e testes das melhorias
+- **[CORRECAO_RECUSA_MODELO.md](CORRECAO_RECUSA_MODELO.md)** - 🔧 Correção do problema de recusa do modelo GPT-4o
+
+### 📊 Análise do Projeto
+- **[ANALISE_TRABALHO.md](ANALISE_TRABALHO.md)** - Análise detalhada do projeto identificando melhorias necessárias
+
 ### Guias de Início Rápido
 - **[QUICKSTART.md](QUICKSTART.md)** - Guia rápido para começar a usar o projeto em poucos minutos
 
@@ -21,6 +30,19 @@ Este diretório contém toda a documentação do projeto STRIDE Threat Analyzer.
 
 ## 🔍 Navegação Rápida
 
+### ⚡ Novidades - Melhorias Implementadas (01/03/2026)
+1. **Leia primeiro:** [RESUMO_MELHORIAS.md](RESUMO_MELHORIAS.md) - Visão geral das 7 melhorias
+2. **Detalhes técnicos:** [MELHORIAS_IMPLEMENTADAS.md](MELHORIAS_IMPLEMENTADAS.md)
+3. **Como testar:** [GUIA_TESTES.md](GUIA_TESTES.md)
+4. **Análise original:** [ANALISE_TRABALHO.md](ANALISE_TRABALHO.md)
+
+**Principais melhorias:**
+- ✅ Modelo GPT-4o (vs gpt-4o-mini)
+- ✅ Trust Boundaries implementadas
+- ✅ Matriz STRIDE visual no PDF
+- ✅ Risk Score calculado (0-10)
+- ✅ Análise exaustiva (15+ componentes)
+
 ### Para Começar
 1. Leia o [README principal](../README.md) para visão geral do projeto
 2. Siga o [QUICKSTART.md](QUICKSTART.md) para configuração inicial
@@ -29,7 +51,8 @@ Este diretório contém toda a documentação do projeto STRIDE Threat Analyzer.
 ### Para Desenvolvedores
 1. Consulte [PLANO_IMPLEMENTACAO_SIMPLIFICADO.md](PLANO_IMPLEMENTACAO_SIMPLIFICADO.md) para entender a arquitetura
 2. Veja [AVALIACAO_PROJETO.md](AVALIACAO_PROJETO.md) para testes e validações realizadas
-3. Explore os [relatórios de exemplo](reports/) para ver o output esperado
+3. **Novo:** Leia [MELHORIAS_IMPLEMENTADAS.md](MELHORIAS_IMPLEMENTADAS.md) para melhorias recentes
+4. Explore os [relatórios de exemplo](reports/) para ver o output esperado
 
 ### Para Usuários
 1. Siga o [QUICKSTART.md](QUICKSTART.md) para usar o sistema
@@ -40,12 +63,25 @@ Este diretório contém toda a documentação do projeto STRIDE Threat Analyzer.
 
 ```
 docs/
-├── README.md                              # Este arquivo
-├── QUICKSTART.md                          # Guia de início rápido
-├── PLANO_IMPLEMENTACAO_SIMPLIFICADO.md   # Plano de implementação
-├── AVALIACAO_PROJETO.md                  # Avaliação e testes
-├── IADT - Fase 5 - Hackaton.pdf         # Documento do hackathon
-└── reports/                              # Exemplos de relatórios
+├── README.md                              # Este arquivo (índice)
+│
+├── 🚀 Melhorias 2026
+│   ├── RESUMO_MELHORIAS.md               # Resumo executivo (NOVO!)
+│   ├── MELHORIAS_IMPLEMENTADAS.md        # Detalhes técnicos (NOVO!)
+│   ├── GUIA_TESTES.md                    # Guia de validação (NOVO!)
+│   └── ANALISE_TRABALHO.md              # Análise original
+│
+├── 📚 Guias
+│   └── QUICKSTART.md                     # Guia de início rápido
+│
+├── 🔧 Documentação Técnica
+│   ├── PLANO_IMPLEMENTACAO_SIMPLIFICADO.md
+│   └── AVALIACAO_PROJETO.md
+│
+├── 📄 Hackathon
+│   └── IADT - Fase 5 - Hackaton.pdf
+│
+└── 📊 reports/                           # Exemplos de relatórios
     ├── test_report.pdf
     └── novo_test_report.pdf
 ```

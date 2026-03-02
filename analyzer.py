@@ -64,79 +64,136 @@ def analyze_architecture(image_path: str) -> dict:
         logger.error(f"❌ Erro ao ler arquivo: {str(e)}")
         return {"error": f"Erro ao ler arquivo: {str(e)}"}
     
-    # Prompt para análise STRIDE
-    prompt = """
-    Analise este diagrama de arquitetura de software e aplique a metodologia STRIDE de modelagem de ameaças.
+    # Importar conhecimento STRIDE (versão simplificada para o prompt)
+    from stride_knowledge import STRIDE_DETAILS, COUNTERMEASURES
     
-    Siga estas instruções:
+    # Prompt aprimorado para análise STRIDE exaustiva
+    prompt = f"""
+    EXECUTE A ANÁLISE STRIDE AGORA. Analise o diagrama de arquitetura fornecido e retorne o JSON conforme especificado.
     
-    1. **Identificação de Componentes**: Liste todos os componentes visíveis no diagrama (usuários, servidores, bancos de dados, APIs, serviços externos, redes, etc)
+    IMPORTANTE: Você DEVE analisar a imagem fornecida e retornar o JSON estruturado. NÃO recuse ou forneça apenas orientações gerais.
     
-    2. **Análise STRIDE por Componente**: Para cada componente identificado, analise as seguintes categorias:
-       - **S (Spoofing)**: Ameaças de falsificação de identidade
-       - **T (Tampering)**: Ameaças de adulteração de dados
-       - **R (Repudiation)**: Ameaças de repúdio/negação de ações
-       - **I (Information Disclosure)**: Ameaças de vazamento de informações
-       - **D (Denial of Service)**: Ameaças de negação de serviço
-       - **E (Elevation of Privilege)**: Ameaças de elevação de privilégio
+    METODOLOGIA STRIDE:
+    - S (Spoofing): Riscos de falsificação de identidade
+    - T (Tampering): Riscos de adulteração de dados
+    - R (Repudiation): Riscos de negação de ações
+    - I (Information Disclosure): Riscos de vazamento de informação
+    - D (Denial of Service): Riscos de indisponibilidade
+    - E (Elevation of Privilege): Riscos de escalação de privilégios
     
-    3. **Análise de Fluxos de Dados**: Identifique os fluxos de dados entre componentes e possíveis ameaças nessas comunicações
+    PASSOS DA ANÁLISE:
     
-    4. **Contramedidas**: Para cada ameaça identificada, sugira contramedidas específicas e práticas
+    1. Examine a imagem e identifique TODOS os componentes visíveis (servidores, bancos de dados, load balancers, 
+       CDNs, firewalls, serviços de nuvem, sistemas de backup, logs, monitoring, etc.)
     
-    5. **Priorização**: Classifique as ameaças por criticidade (Alta, Média, Baixa)
+    2. Identifique trust boundaries (Internet↔Cloud, Public↔Private Subnet, camadas de aplicação, etc.)
     
-    Estruture a resposta em formato JSON com a seguinte estrutura:
-    {
+    3. Para cada componente, aplique análise STRIDE completa identificando 2-3 ameaças por componente
+    
+    4. Identifique fluxos de dados entre componentes
+    
+    5. Proponha contramedidas específicas para cada ameaça
+    
+    6. Calcule risk score de 0-10 baseado na quantidade e severidade das ameaças
+    
+    ## FORMATO DE RESPOSTA JSON (OBRIGATÓRIO):
+    
+    {{
         "componentes": [
-            {
-                "nome": "nome do componente",
-                "tipo": "tipo do componente (ex: database, api, user, server)",
-                "descricao": "breve descrição do componente e sua função na arquitetura",
+            {{
+                "nome": "nome completo do componente",
+                "tipo": "database|api|server|user|loadbalancer|cache|cdn|firewall|auth|monitoring|backup|email|storage|...",
+                "descricao": "descrição detalhada do componente e função na arquitetura",
                 "ameacas": [
-                    {
-                        "categoria": "S/T/R/I/D/E",
-                        "descricao": "descrição detalhada da ameaça",
-                        "severidade": "Alta/Média/Baixa"
-                    }
+                    {{
+                        "categoria": "S|T|R|I|D|E",
+                        "nome_ameaca": "nome curto da ameaça",
+                        "descricao": "descrição detalhada da ameaça e como pode ser explorada",
+                        "severidade": "Alta|Média|Baixa",
+                        "impacto": "descrição do impacto se explorada"
+                    }}
                 ],
-                "contramedidas": ["contramedida 1", "contramedida 2", "contramedida 3"]
-            }
+                "contramedidas": [
+                    {{
+                        "ameaca_relacionada": "categoria STRIDE",
+                        "contramedida": "descrição detalhada da contramedida",
+                        "prioridade": "Alta|Média|Baixa"
+                    }}
+                ]
+            }}
+        ],
+        "trust_boundaries": [
+            {{
+                "nome": "nome da fronteira",
+                "descricao": "descrição da fronteira de confiança",
+                "componente_origem": "zona/camada de origem",
+                "componente_destino": "zona/camada de destino",
+                "controles_existentes": ["controle 1", "controle 2"],
+                "ameacas": ["ameaça ao atravessar esta fronteira"],
+                "contramedidas_recomendadas": ["contramedida 1", "contramedida 2"]
+            }}
         ],
         "fluxos_dados": [
-            {
+            {{
                 "origem": "componente origem",
                 "destino": "componente destino",
+                "tipo_dados": "tipo de dados trafegados",
+                "protocolo": "protocolo usado (HTTP, HTTPS, TCP, etc)",
+                "criptografado": true/false,
+                "autenticado": true/false,
+                "atravessa_trust_boundary": true/false,
                 "ameacas": ["ameaça 1", "ameaça 2"],
                 "contramedidas": ["contramedida 1", "contramedida 2"]
-            }
+            }}
         ],
-        "resumo": {
+        "matriz_stride": {{
+            "componente_1": {{"S": true, "T": true, "R": false, "I": true, "D": true, "E": false}},
+            "componente_2": {{"S": true, "T": false, "R": true, "I": true, "D": true, "E": true}}
+        }},
+        "resumo": {{
             "total_componentes": 0,
             "total_ameacas": 0,
+            "total_trust_boundaries": 0,
             "ameacas_alta": 0,
             "ameacas_media": 0,
-            "ameacas_baixa": 0
-        },
-        "recomendacoes_gerais": ["recomendação 1", "recomendação 2"]
-    }
+            "ameacas_baixa": 0,
+            "risk_score": 7.5,
+            "risk_justificativa": "justificativa do score calculado"
+        }},
+        "recomendacoes_gerais": [
+            {{
+                "categoria": "categoria da recomendação",
+                "recomendacao": "recomendação detalhada",
+                "prioridade": "Alta|Média|Baixa"
+            }}
+        ]
+    }}
     
-    Seja específico e detalhado nas análises. Considere as melhores práticas de segurança atuais.
+    
+    RETORNE APENAS O OBJETO JSON. Não inclua explicações, guias ou texto adicional.
+    Comece sua resposta diretamente com {{ e termine com }}.
+    
+    Se você não conseguir analisar perfeitamente todos os detalhes, faça o melhor possível baseado no que consegue 
+    identificar na imagem. SEMPRE retorne o JSON estruturado conforme especificado.
     """
     
     try:
-        logger.info("🤖 Enviando requisição para GPT-4o-mini Vision...")
-        logger.info(f"   Modelo: gpt-4o-mini")
-        logger.info(f"   Max tokens: 8192")
-        logger.info(f"   Temperature: 1")
+        logger.info("🤖 Enviando requisição para GPT-4o Vision...")
+        logger.info(f"   Modelo: gpt-4o")
+        logger.info(f"   Max tokens: 16000")
+        logger.info(f"   Temperature: 0.3")
         logger.info(f"   Timeout: 300s")
         
         api_start = datetime.now()
         
-        # Fazer chamada à API do OpenAI com GPT-4o-mini Vision
+        # Fazer chamada à API do OpenAI com GPT-4o Vision
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4o",
             messages=[
+                {
+                    "role": "system",
+                    "content": "You are a security analysis tool that outputs structured JSON. Always return valid JSON matching the requested schema, never refuse or provide explanations instead."
+                },
                 {
                     "role": "user",
                     "content": [
@@ -151,8 +208,8 @@ def analyze_architecture(image_path: str) -> dict:
                     ]
                 }
             ],
-            max_tokens=8192,
-            temperature=0.5
+            max_tokens=16000,
+            temperature=0.3
         )
         
         api_duration = (datetime.now() - api_start).total_seconds()
@@ -200,7 +257,7 @@ def analyze_architecture(image_path: str) -> dict:
         return {
             "success": True,
             "analysis": analysis_json,
-            "model": "gpt-4o-mini",
+            "model": "gpt-4o",
             "image_path": image_path
         }
     
