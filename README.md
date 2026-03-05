@@ -45,24 +45,24 @@ Este projeto foi desenvolvido para o **Hackathon FIAP Fase 5** e utiliza Intelig
 
 ```mermaid
 flowchart TD
-    A([👤 Usuario]) -->|Upload diagrama\n.png / .jpg| B[🖥️ Streamlit\napp.py]
-    B -->|POST /analyze\nMultipart image| C[⚡ FastAPI\nmain.py]
-    C -->|Valida tipo\ne tamanho ≤ 10MB| D{Arquivo\nvalido?}
-    D -->|Nao| E[❌ Erro 400\nTipo/tamanho invalido]
-    D -->|Sim| F[Salva arquivo\ntemporario]
-    F --> G[🤖 Analyzer\nanalyzer.py]
-    G -->|Codifica imagem\nem Base64| H[🧠 GPT-4o Vision\nOpenAI API]
-    H -->|Prompt STRIDE\nexaustivo| I[📋 Resposta JSON\nComponentes + Ameacas]
-    I --> J{JSON\nvalido?}
-    J -->|Sim| K[🔧 Enriquecimento\nstride_knowledge.py]
-    J -->|Nao| L[⚠️ Retorna\ncomo texto]
-    K -->|Adiciona ameacas\ne impactos por\ntipo de componente| M[✅ Analise\nEnriquecida]
-    M --> N[📊 Resultado JSON\nvia API]
+    A([👤 Usuario]) -->|Upload diagrama.png .jpg| B[🖥️ Streamlitapp.py]
+    B -->|POST /analyzeMultipart image| C[⚡ FastAPImain.py]
+    C -->|Valida tipoe tamanho ≤ 10MB| D{Arquivo valido?}
+    D -->|Nao| E[❌ Erro 400Tipo/tamanho invalido]
+    D -->|Sim| F[Salva arquivotemporario]
+    F --> G[🤖 Analyzeranalyzer.py]
+    G -->|Codifica imagemem Base64| H[🧠 GPT-4o VisionOpenAI API]
+    H -->|Prompt STRIDEexaustivo| I[📋 Resposta JSONComponentes + Ameacas]
+    I --> J{JSONvalido?}  
+    J -->|Sim| K[🔧 Enriquecimentostride_knowledge.py]
+    J -->|Nao| L[⚠️ Retornacomo texto]
+    K -->|Adiciona ameacase impactos portipo de componente| M[✅ AnaliseEnriquecida]
+    M --> N[📊 Resultado JSON via API]
     N --> B
-    B --> O{Formato de\ndownload?}
-    O -->|JSON| P[💾 Download\nJSON]
-    O -->|PDF| Q[📄 PDF Generator\npdf_generator.py]
-    Q -->|Capa + Sumario\n+ Graficos + Matriz\nSTRIDE + Trust\nBoundaries| R[⬇️ Download\nPDF]
+    B --> O{Formato de download?}
+    O -->|JSON| P[💾 Download JSON]
+    O -->|PDF| Q[📄 PDF Generatorpdf_generator.py]
+    Q -->|Capa + Sumario+ Graficos + MatrizSTRIDE + TrustBoundaries| R[⬇️ DownloadPDF]
 
     style A fill:#e1f5fe,stroke:#0288d1
     style B fill:#fff3e0,stroke:#f57c00
